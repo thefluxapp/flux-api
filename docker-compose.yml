@@ -6,7 +6,8 @@ services:
     command: "cargo watch -x 'run --'"
     environment:
       APP_ADDR: 0.0.0.0:3000
-      HISTFILE: ./.local/.bash_history
+      DATABASE_URL: postgres://postgres:postgres@flux-pg.flux.local/flux
+      HISTFILE: /app/.local/.bash_history
     networks:
       default:
         aliases:
