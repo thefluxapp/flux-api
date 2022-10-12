@@ -3,5 +3,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      APP_ADDR: 0.0.0.0:3000
+    networks:
+      default:
+        aliases:
+          - flux-api.flux.local
+    ports:
+      - 3091:3000
     volumes:
       - ./:/app
+      - cargo-home:/usr/local/cargo
+      - rustup-home:/usr/local/rustup
+
+volumes:
+  cargo-home:
+  rustup-home:
+
+networks:
+  default:
+    name: flux-dev

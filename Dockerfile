@@ -1,3 +1,6 @@
 FROM rust:1.64-alpine
 
-RUN apk add bash
+ENV RUSTFLAGS="-C target-feature=-crt-static"
+WORKDIR /app
+
+RUN apk add bash gcc g++ libressl-dev

@@ -6,3 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum = "0.5.16"
+sea-orm = { version = "0.9.3", features= ["sqlx-postgres", "runtime-tokio-native-tls", "macros"] }
+serde = { version = "1.0.145", features = ["derive"] }
+tokio = { version = "1.21.2", features = ["full"]}
