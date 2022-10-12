@@ -3,18 +3,41 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: "cargo watch -x 'run --'"
     environment:
       APP_ADDR: 0.0.0.0:3000
+      HISTFILE: ./.local/.bash_history
     networks:
       default:
         aliases:
           - flux-api.flux.local
     ports:
       - 3091:3000
+    depends_on:
+      - pg
+    stdin_open: true
+    tty: true
     volumes:
       - ./:/app
       - cargo-home:/usr/local/cargo
       - rustup-home:/usr/local/rustup
+
+  pg:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_DB: flux
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./.local/volumes/pg/data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres -d flux
+    ports:
+      - 5432:5432
+    networks:
+      default:
+        aliases:
+          - flux-pg.flux.local
 
 volumes:
   cargo-home:
