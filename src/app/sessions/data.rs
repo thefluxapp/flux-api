@@ -5,7 +5,7 @@ use crate::app::User;
 
 #[derive(Serialize)]
 pub struct SessionData {
-    pub user: User
+    pub user: User,
 }
 
 #[derive(Serialize)]
