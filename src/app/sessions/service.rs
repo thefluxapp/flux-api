@@ -1,4 +1,7 @@
 use std::env;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use crate::app::User;
 
 use super::{
     data::{AuthData, AuthPayload, SessionData},
@@ -6,14 +9,10 @@ use super::{
 };
 use fake::Fake;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use sea_orm::{DatabaseConnection, EntityTrait, Set, prelude::Uuid};
+use sea_orm::{DatabaseConnection, EntityTrait, Set};
 
-pub fn show(_pool: &DatabaseConnection) -> SessionData {
-    dbg!(&env::var("AUTH_PRIVATE_KEY").unwrap());
-
-    SessionData {
-        id: Uuid::new_v4(),
-    }
+pub fn show(user: User, _pool: &DatabaseConnection) -> SessionData {
+    SessionData { user }
 }
 
 pub async fn auth(pool: &DatabaseConnection) -> AuthData {
@@ -24,6 +23,10 @@ pub async fn auth(pool: &DatabaseConnection) -> AuthData {
     let res = user::Entity::insert(new_user).exec(pool).await.unwrap();
     let payload = AuthPayload {
         sub: res.last_insert_id,
+        exp: (SystemTime::now() + Duration::new(60 * 60 * 24 * 365, 0))
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis(),
     };
     let token = encode(
         &Header::new(Algorithm::RS256),

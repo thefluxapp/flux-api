@@ -1,9 +1,11 @@
 use sea_orm::prelude::Uuid;
 use serde::Serialize;
 
+use crate::app::User;
+
 #[derive(Serialize)]
 pub struct SessionData {
-    pub id: Uuid,
+    pub user: User
 }
 
 #[derive(Serialize)]
@@ -14,5 +16,6 @@ pub struct AuthData {
 
 #[derive(Debug, Serialize)]
 pub struct AuthPayload {
-    pub sub: Uuid
+    pub sub: Uuid,
+    pub exp: u128,
 }
