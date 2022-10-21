@@ -10,9 +10,6 @@ use super::User;
 mod data;
 mod service;
 
-#[cfg(test)]
-
-
 pub fn router() -> Router {
     Router::new()
         .route("/", get(index))
