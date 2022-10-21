@@ -1,7 +1,8 @@
 use axum::{
     async_trait,
-    extract::{FromRequest, RequestParts, TypedHeader},
+    extract::{FromRequestParts, TypedHeader},
     headers::{authorization::Bearer, Authorization},
+    http::request::Parts,
     response::Response,
     routing::get,
     routing::post,
@@ -15,6 +16,7 @@ use std::{env, net::SocketAddr, str::FromStr};
 use self::users::entities;
 
 mod db;
+mod messages;
 mod sessions;
 mod users;
 
@@ -27,7 +29,8 @@ pub async fn run() {
             Router::new()
                 .route("/status", get(|| async {}))
                 .route("/session", get(sessions::show))
-                .route("/session/auth", post(sessions::auth)),
+                .route("/session/auth", post(sessions::auth))
+                .nest("/messages", messages::router()),
         )
         .layer(Extension(pool));
 
@@ -56,26 +59,26 @@ impl From<entities::user::Model> for User {
 }
 
 #[async_trait]
-impl<B> FromRequest<B> for User
+impl<S> FromRequestParts<S> for User
 where
-    B: Send,
+    S: Send + Sync,
 {
     type Rejection = Response;
 
-    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let TypedHeader(Authorization(bearer)) = req
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .unwrap();
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let TypedHeader(Authorization(bearer)) =
+            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
+                .await
+                .unwrap();
 
         let jwt_user = decode::<JwtUser>(
-            &bearer.token(),
+            bearer.token(),
             &DecodingKey::from_rsa_pem(&env::var("AUTH_PUBLIC_KEY").unwrap().into_bytes()).unwrap(),
             &Validation::new(Algorithm::RS256),
         )
         .unwrap();
 
-        let Extension(pool) = Extension::<DatabaseConnection>::from_request(req)
+        let Extension(pool) = Extension::<DatabaseConnection>::from_request_parts(parts, state)
             .await
             .unwrap();
 
