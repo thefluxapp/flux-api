@@ -7,7 +7,7 @@ use super::User;
 
 mod data;
 mod entities;
-mod service;
+pub mod service;
 
 pub async fn auth(Extension(pool): Extension<DatabaseConnection>) -> Json<AuthData> {
     Json(service::auth(&pool).await)

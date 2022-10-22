@@ -9,6 +9,7 @@ use super::{
 };
 use fake::Fake;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use sea_orm::prelude::Uuid;
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
 
 pub fn show(user: User, _pool: &DatabaseConnection) -> SessionData {
@@ -21,19 +22,7 @@ pub async fn auth(pool: &DatabaseConnection) -> AuthData {
         ..Default::default()
     };
     let res = user::Entity::insert(new_user).exec(pool).await.unwrap();
-    let payload = AuthPayload {
-        sub: res.last_insert_id,
-        exp: (SystemTime::now() + Duration::new(60 * 60 * 24 * 365, 0))
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_millis(),
-    };
-    let token = encode(
-        &Header::new(Algorithm::RS256),
-        &payload,
-        &EncodingKey::from_rsa_pem(&env::var("AUTH_PRIVATE_KEY").unwrap().into_bytes()).unwrap(),
-    )
-    .unwrap();
+    let token = create_token(res.last_insert_id);
 
     AuthData {
         id: res.last_insert_id,
@@ -41,11 +30,19 @@ pub async fn auth(pool: &DatabaseConnection) -> AuthData {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
+pub fn create_token(sub: Uuid) -> String {
+    let payload = AuthPayload {
+        sub,
+        exp: (SystemTime::now() + Duration::new(60 * 60 * 24 * 365, 0))
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis(),
+    };
+
+    encode(
+        &Header::new(Algorithm::RS256),
+        &payload,
+        &EncodingKey::from_rsa_pem(&env::var("AUTH_PRIVATE_KEY").unwrap().into_bytes()).unwrap(),
+    )
+    .unwrap()
 }
