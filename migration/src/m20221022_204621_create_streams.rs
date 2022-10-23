@@ -53,5 +53,6 @@ pub enum Streams {
     Id,
     Title,
     UserId,
+    MessageId,
     CreatedAt,
 }
