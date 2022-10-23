@@ -31,7 +31,8 @@ pub async fn run() {
                 .route("/status", get(|| async {}))
                 .route("/session", get(sessions::show))
                 .route("/session/auth", post(sessions::auth))
-                .nest("/messages", messages::router()),
+                .nest("/messages", messages::router())
+                .nest("/streams", streams::router()),
         )
         .layer(Extension(pool));
 

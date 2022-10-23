@@ -6,7 +6,7 @@ use super::{
     entities,
     payload::CreateMessagePayload,
 };
-use crate::app::{streams::service::StreamService, User};
+use crate::app::{streams::service::StreamsService, User};
 
 pub struct MessagesService {}
 
@@ -32,9 +32,9 @@ impl MessagesService {
                     .unwrap()
                     .unwrap();
 
-                StreamService::find_or_create_by_message(message, pool).await
+                StreamsService::find_or_create_by_message(message, pool).await
             }
-            None => StreamService::find_or_create_by_user(user, pool).await,
+            None => StreamsService::find_or_create_by_user(user, pool).await,
         };
 
         let message = MessagesService::create_with_stream(user, pool, payload, &stream).await;

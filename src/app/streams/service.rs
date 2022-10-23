@@ -1,12 +1,38 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
+};
 
 use super::entities;
 use crate::app::User;
 
-pub struct StreamService {}
+pub struct StreamsService {}
 
 // TODO: ADD ON CONFLICT
-impl StreamService {
+impl StreamsService {
+    pub async fn index(pool: &DatabaseConnection) -> Vec<entities::stream::Model> {
+        entities::stream::Entity::find().all(pool).await.unwrap()
+    }
+
+    pub async fn show(
+        stream_id: Uuid,
+        pool: &DatabaseConnection,
+    ) -> (entities::stream::Model, Vec<entities::message::Model>) {
+        let stream = entities::stream::Entity::find_by_id(stream_id)
+            .one(pool)
+            .await
+            .unwrap()
+            .unwrap();
+
+        let messages = entities::message::Entity::find()
+            .inner_join(entities::message_stream::Entity)
+            .filter(entities::message_stream::Column::StreamId.eq(stream.id))
+            .all(pool)
+            .await
+            .unwrap();
+
+        (stream, messages)
+    }
+
     pub async fn find_or_create_by_user(
         user: &User,
         pool: &DatabaseConnection,
