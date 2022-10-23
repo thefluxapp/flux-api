@@ -18,6 +18,7 @@ use self::users::entities;
 mod db;
 mod messages;
 mod sessions;
+mod streams;
 mod users;
 
 pub async fn run() {

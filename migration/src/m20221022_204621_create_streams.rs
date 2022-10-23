@@ -11,23 +11,28 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Messages::Table)
+                    .table(Streams::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Messages::Id)
+                        ColumnDef::new(Streams::Id)
                             .uuid()
                             .not_null()
                             .primary_key()
-                            .extra("default uuid_generate_v4()".to_string())
-                            ,
+                            .extra("default uuid_generate_v4()".to_string()),
                     )
-                    .col(ColumnDef::new(Messages::Text).string().not_null())
-                    .col(ColumnDef::new(Messages::UserId).uuid().not_null())
+                    .col(ColumnDef::new(Streams::Title).string())
+                    .col(ColumnDef::new(Streams::UserId).uuid())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-messages-user-id")
-                            .from(Messages::Table, Messages::UserId)
+                            .name("fk-streams-user-id")
+                            .from(Streams::Table, Streams::UserId)
                             .to(Users::Table, Users::Id),
+                    )
+                    .col(
+                        ColumnDef::new(Streams::CreatedAt)
+                            .date_time()
+                            .not_null()
+                            .extra("default now()".to_string()),
                     )
                     .to_owned(),
             )
@@ -36,16 +41,17 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Messages::Table).to_owned())
+            .drop_table(Table::drop().table(Streams::Table).to_owned())
             .await
     }
 }
 
 /// Learn more at https://docs.rs/sea-query#iden
 #[derive(Iden)]
-pub enum Messages {
+pub enum Streams {
     Table,
     Id,
-    Text,
+    Title,
     UserId,
+    CreatedAt,
 }
