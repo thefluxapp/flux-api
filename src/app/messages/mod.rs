@@ -1,5 +1,5 @@
 mod data;
-mod entities;
+pub mod entities;
 mod payload;
 mod service;
 
@@ -31,5 +31,5 @@ async fn create(
     Extension(pool): Extension<DatabaseConnection>,
     Json(payload): Json<CreateMessagePayload>,
 ) -> Json<CreateData> {
-    Json(MessagesService::create(user, &pool, payload).await)
+    Json(MessagesService::create(&user, &pool, payload).await)
 }

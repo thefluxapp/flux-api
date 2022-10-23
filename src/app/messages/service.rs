@@ -1,11 +1,12 @@
-use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, Set, TransactionTrait};
 use validator::Validate;
 
 use super::{
     data::{CreateData, IndexData},
+    entities,
     payload::CreateMessagePayload,
 };
-use crate::app::{messages::entities::message, User};
+use crate::app::{streams::service::StreamService, User};
 
 pub struct MessagesService {}
 
@@ -17,23 +18,48 @@ impl MessagesService {
     }
 
     pub async fn create(
-        user: User,
+        user: &User,
         pool: &DatabaseConnection,
         payload: CreateMessagePayload,
     ) -> CreateData {
         payload.validate().unwrap();
 
-        let message = message::ActiveModel {
+        let stream = StreamService::find_or_create_by_user(user, pool).await;
+        let message = MessagesService::create_with_stream(user, pool, payload, &stream).await;
+
+        CreateData {
+            message: message.into(),
+        }
+    }
+
+    async fn create_with_stream(
+        user: &User,
+        pool: &DatabaseConnection,
+        payload: CreateMessagePayload,
+        stream: &entities::stream::Model,
+    ) -> entities::message::Model {
+        let txn = pool.begin().await.unwrap();
+
+        let message = entities::message::ActiveModel {
             text: Set(payload.text),
             user_id: Set(user.id),
             ..Default::default()
         };
 
-        let message: message::Model = message.insert(pool).await.unwrap();
+        let message: entities::message::Model = message.insert(&txn).await.unwrap();
 
-        CreateData {
-            message: message.into(),
+        entities::message_stream::ActiveModel {
+            message_id: Set(message.id),
+            stream_id: Set(stream.id),
+            ..Default::default()
         }
+        .save(&txn)
+        .await
+        .unwrap();
+
+        txn.commit().await.unwrap();
+
+        message
     }
 }
 
