@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelTrait, DatabaseConnection, Set, TransactionTrait};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, TransactionTrait};
 use validator::Validate;
 
 use super::{
@@ -24,7 +24,19 @@ impl MessagesService {
     ) -> CreateData {
         payload.validate().unwrap();
 
-        let stream = StreamService::find_or_create_by_user(user, pool).await;
+        let stream = match payload.message_id {
+            Some(message_id) => {
+                let message = entities::message::Entity::find_by_id(message_id)
+                    .one(pool)
+                    .await
+                    .unwrap()
+                    .unwrap();
+
+                StreamService::find_or_create_by_message(message, pool).await
+            }
+            None => StreamService::find_or_create_by_user(user, pool).await,
+        };
+
         let message = MessagesService::create_with_stream(user, pool, payload, &stream).await;
 
         CreateData {

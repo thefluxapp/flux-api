@@ -8,6 +8,7 @@ pub struct Model {
     pub id: Uuid,
     pub title: Option<String>,
     pub user_id: Option<Uuid>,
+    pub message_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
