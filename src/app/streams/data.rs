@@ -42,10 +42,21 @@ pub struct StreamsShowData {
 pub struct MessageData {
     id: Uuid,
     text: String,
+    stream: Option<StreamData>,
 }
 
-impl From<(entities::stream::Model, Vec<entities::message::Model>)> for StreamsShowData {
-    fn from((stream, messages): (entities::stream::Model, Vec<entities::message::Model>)) -> Self {
+impl
+    From<(
+        entities::stream::Model,
+        Vec<(entities::message::Model, Option<entities::stream::Model>)>,
+    )> for StreamsShowData
+{
+    fn from(
+        (stream, messages): (
+            entities::stream::Model,
+            Vec<(entities::message::Model, Option<entities::stream::Model>)>,
+        ),
+    ) -> Self {
         StreamsShowData {
             stream: stream.into(),
             messages: messages.into_iter().map(|x| x.into()).collect(),
@@ -53,11 +64,21 @@ impl From<(entities::stream::Model, Vec<entities::message::Model>)> for StreamsS
     }
 }
 
-impl From<entities::message::Model> for MessageData {
-    fn from(message: entities::message::Model) -> Self {
+// TODO: Try to refactor this
+impl From<(entities::message::Model, Option<entities::stream::Model>)> for MessageData {
+    fn from(
+        (message, stream): (entities::message::Model, Option<entities::stream::Model>),
+    ) -> Self {
         MessageData {
             id: message.id,
             text: message.text,
+            stream: match stream {
+                Some(stream) => Some(StreamData {
+                    id: stream.id,
+                    text: Some(String::from("QQQ")),
+                }),
+                None => None,
+            },
         }
     }
 }
