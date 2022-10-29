@@ -24,17 +24,22 @@ impl MessagesService {
     ) -> CreateData {
         payload.validate().unwrap();
 
-        let stream = match payload.message_id {
-            Some(message_id) => {
-                let message = entities::message::Entity::find_by_id(message_id)
-                    .one(pool)
-                    .await
-                    .unwrap()
-                    .unwrap();
+        let stream = if let Some(message_id) = payload.message_id {
+            let message = entities::message::Entity::find_by_id(message_id)
+                .one(pool)
+                .await
+                .unwrap()
+                .unwrap();
 
-                StreamsService::find_or_create_by_message(message, pool).await
-            }
-            None => StreamsService::find_or_create_by_user(user, pool).await,
+            StreamsService::find_or_create_by_message(message, pool).await
+        } else if let Some(stream_id) = payload.stream_id {
+            entities::stream::Entity::find_by_id(stream_id)
+                .one(pool)
+                .await
+                .unwrap()
+                .unwrap()
+        } else {
+            StreamsService::find_or_create_by_user(user, pool).await
         };
 
         let message = MessagesService::create_with_stream(user, pool, payload, &stream).await;
