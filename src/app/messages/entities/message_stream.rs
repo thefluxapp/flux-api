@@ -32,4 +32,10 @@ impl Related<super::stream::Entity> for Entity {
     }
 }
 
+impl Related<super::message::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Message.def()
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}

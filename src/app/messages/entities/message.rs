@@ -18,12 +18,22 @@ pub enum Relation {
         to = "super::user::Column::Id"
     )]
     User,
+    #[sea_orm(has_one = "super::message_stream::Entity")]
+    MessageStream,
+    #[sea_orm(has_one = "super::stream::Entity")]
+    Stream,
 }
 
-// impl Related<super::user::Entity> for Entity {
-//     fn to() -> RelationDef {
-//         Relation::User.def()
-//     }
-// }
+impl Related<super::message_stream::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::MessageStream.def()
+    }
+}
+
+impl Related<super::stream::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Stream.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

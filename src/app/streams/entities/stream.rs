@@ -21,12 +21,18 @@ pub enum Relation {
     User,
     #[sea_orm(has_many = "super::message_stream::Entity")]
     MessageStream,
+    #[sea_orm(
+        belongs_to = "super::message::Entity",
+        from = "Column::MessageId",
+        to = "super::message::Column::Id"
+    )]
+    Message,
 }
 
-// impl Related<super::message_stream::Entity> for Entity {
-//     fn to() -> RelationDef {
-//         Relation::MessageStream.def()
-//     }
-// }
+impl Related<super::message::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Message.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}
