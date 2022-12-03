@@ -1,4 +1,5 @@
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, TransactionTrait};
+use tokenizers::Tokenizer;
 use validator::Validate;
 
 use super::{
@@ -78,7 +79,52 @@ impl MessagesService {
 
         message
     }
+
+    pub async fn summarize(messages: Vec<entities::message::Model>) {
+        // let raw_text: Vec<String> = messages.into_iter().map(|message| message.text).collect();
+
+        // use rust_bert::pipelines::summarization::SummarizationModel;
+
+        let sentence = "Google is an American multinational technology company focusing on search engine technology, online advertising, cloud computing, computer software, quantum computing, e-commerce, artificial intelligence, and consumer electronics. It has been referred to as \"the most powerful company in the world\" and one of the world's most valuable brands due to its market dominance, data collection, and technological advantages in the area of artificial intelligence. Its parent company Alphabet is considered one of the Big Five American information technology companies, alongside Amazon, Apple, Meta, and Microsoft.".to_string();
+        let tokenizer = Tokenizer::from_pretrained("JulesBelveze/t5-small-headline-generator", None).unwrap();
+        let encoding = tokenizer
+            .encode(sentence, false)
+            .unwrap();
+
+        // let ids = encoding.get_ids();
+
+        // println!("{:?}", ids);
+
+        // let mut model = SummarizationModel::new(Default::default()).unwrap();
+
+
+        // let output = model.summarize(&input);
+
+        // dbg!(output);
+        // let encoding = tokenizer.encode(raw_text, false).unwrap();
+        // println!("{:?}", encoding.get_tokens());
+
+        // let mut summariser =
+        //     Summariser::from_raw_text(raw_text.clone(), ".", 5, 1500, false, false, 6);
+
+        // dbg!(qq.join(". "));
+    }
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use tokenizers::Tokenizer;
+
+    #[test]
+    fn test_summarize() {
+        let sentence = "Google is an American multinational technology company focusing on search engine technology, online advertising, cloud computing, computer software, quantum computing, e-commerce, artificial intelligence, and consumer electronics. It has been referred to as \"the most powerful company in the world\" and one of the world's most valuable brands due to its market dominance, data collection, and technological advantages in the area of artificial intelligence. Its parent company Alphabet is considered one of the Big Five American information technology companies, alongside Amazon, Apple, Meta, and Microsoft.".to_string();
+        let mut tokenizer = Tokenizer::from_pretrained("JulesBelveze/t5-small-headline-generator", None).unwrap();
+        let encoding = tokenizer
+            .encode(sentence, false)
+            .unwrap();
+
+        let ids = encoding.get_ids();
+
+        println!("{:?}", ids);
+    }
+}

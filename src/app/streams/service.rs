@@ -3,7 +3,7 @@ use sea_orm::{
 };
 
 use super::entities;
-use crate::app::User;
+use crate::app::{User, messages::service::MessagesService};
 
 pub struct StreamsService {}
 
@@ -34,6 +34,8 @@ impl StreamsService {
         //     .unwrap();
 
         let messages = StreamsService::find_messages_with_streams_by_stream(stream.id, pool).await;
+        // let raw_text: Vec<String> = ;
+        let qq = MessagesService::summarize(messages.clone().into_iter().map(|x| x.0).collect()).await;
 
         (stream, messages)
     }

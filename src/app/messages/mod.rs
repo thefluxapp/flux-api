@@ -1,7 +1,7 @@
 mod data;
 pub mod entities;
 mod payload;
-mod service;
+pub mod service;
 
 use axum::{
     routing::{get, post},

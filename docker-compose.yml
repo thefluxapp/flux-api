@@ -8,6 +8,11 @@ services:
       APP_ADDR: 0.0.0.0:3000
       DATABASE_URL: postgres://postgres:postgres@flux-pg.flux.local/flux
       HISTFILE: /app/.local/.bash_history
+      LIBTORCH: /usr/lib/libtorch
+      LD_LIBRARY_PATH: /usr/lib/libtorch/lib
+      LIBTORCH_INCLUDE: /usr/lib/libtorch
+      LIBTORCH_LIB: /usr/lib/libtorch
+      DYLD_LIBRARY_PATH: /usr/lib/libtorch/lib
     networks:
       default:
         aliases:
