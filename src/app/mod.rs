@@ -11,7 +11,9 @@ use axum::{
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
+use tokenizers::Tokenizer;
 use std::{env, net::SocketAddr, str::FromStr};
+use std::sync::Arc;
 
 use self::users::entities;
 
@@ -24,6 +26,10 @@ mod users;
 pub async fn run() {
     let pool = db::create_pool(&env::var("DATABASE_URL").unwrap()).await;
 
+    let tokenizer = tokio::task::spawn_blocking(|| {
+        Tokenizer::from_pretrained("JulesBelveze/t5-small-headline-generator", None).unwrap()
+    }).await.unwrap();
+
     let app = Router::new()
         .nest(
             "/api",
@@ -34,7 +40,8 @@ pub async fn run() {
                 .nest("/messages", messages::router())
                 .nest("/streams", streams::router()),
         )
-        .layer(Extension(pool));
+        .layer(Extension(Arc::new(tokenizer)))
+        .layer(Extension(Arc::new(pool)));
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
 

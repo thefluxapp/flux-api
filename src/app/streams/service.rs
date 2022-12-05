@@ -1,6 +1,8 @@
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
+use tokenizers::Tokenizer;
+use tch::Tensor;
 
 use super::entities;
 use crate::app::User;
@@ -16,6 +18,7 @@ impl StreamsService {
     pub async fn show(
         stream_id: Uuid,
         pool: &DatabaseConnection,
+        tokenizer: &Tokenizer,
     ) -> (
         entities::stream::Model,
         Vec<(entities::message::Model, Option<entities::stream::Model>)>,
@@ -25,6 +28,19 @@ impl StreamsService {
             .await
             .unwrap()
             .unwrap();
+
+        let sentence = "Google is an American multinational technology company focusing on search engine technology, online advertising, cloud computing, computer software, quantum computing, e-commerce, artificial intelligence, and consumer electronics. It has been referred to as \"the most powerful company in the world\" and one of the world's most valuable brands due to its market dominance, data collection, and technological advantages in the area of artificial intelligence. Its parent company Alphabet is considered one of the Big Five American information technology companies, alongside Amazon, Apple, Meta, and Microsoft.".to_string();
+        let encoding = tokenizer
+            .encode(sentence, false)
+            .unwrap();
+
+
+        let ids = encoding.get_ids();
+        println!("{:?}", ids);
+
+        let t = Tensor::of_slice(&[3, 1, 4, 1, 5]);
+        let t = t * 2;
+        t.print();
 
         // let messages = entities::message::Entity::find()
         //     .inner_join(entities::message_stream::Entity)
