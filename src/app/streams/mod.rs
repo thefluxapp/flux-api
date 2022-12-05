@@ -1,5 +1,7 @@
 use axum::{extract::Path, routing::get, Extension, Json, Router};
 use sea_orm::{prelude::Uuid, DatabaseConnection};
+use tokenizers::Tokenizer;
+use std::sync::Arc;
 
 use self::{
     data::{StreamsIndexData, StreamsShowData},
@@ -22,7 +24,8 @@ async fn index(Extension(pool): Extension<DatabaseConnection>) -> Json<StreamsIn
 
 async fn show(
     Path(stream_id): Path<Uuid>,
-    Extension(pool): Extension<DatabaseConnection>,
+    tokenizer: Extension<Arc<Tokenizer>>,
+    pool: Extension<Arc<DatabaseConnection>>,
 ) -> Json<StreamsShowData> {
-    Json(StreamsService::show(stream_id, &pool).await.into())
+    Json(StreamsService::show(stream_id, &pool, &tokenizer).await.into())
 }
