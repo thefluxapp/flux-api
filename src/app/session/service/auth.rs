@@ -1,8 +1,11 @@
-use std::{env, time::{UNIX_EPOCH, Duration, SystemTime}};
+use std::{
+    env,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use fake::Fake;
-use jsonwebtoken::{encode, Header, Algorithm, EncodingKey};
-use sea_orm::{DatabaseConnection, Set, ActiveModelTrait};
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -41,9 +44,9 @@ impl SessionService {
         encode(
             &Header::new(Algorithm::RS256),
             &payload,
-            &EncodingKey::from_rsa_pem(&env::var("AUTH_PRIVATE_KEY").unwrap().into_bytes()).unwrap(),
+            &EncodingKey::from_rsa_pem(&env::var("AUTH_PRIVATE_KEY").unwrap().into_bytes())
+                .unwrap(),
         )
         .unwrap()
     }
 }
-

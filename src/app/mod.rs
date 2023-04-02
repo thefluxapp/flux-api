@@ -54,12 +54,15 @@ struct JwtUser {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
-    pub username: String
+    pub username: String,
 }
 
 impl From<entities::user::Model> for User {
     fn from(user: entities::user::Model) -> Self {
-        User { id: user.id, username: user.username }
+        User {
+            id: user.id,
+            username: user.username,
+        }
     }
 }
 

@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(MessagesStreams::Id)
                             .uuid()
                             .not_null()
-                            .primary_key()
+                            .primary_key(),
                     )
                     .col(ColumnDef::new(MessagesStreams::MessageId).uuid().not_null())
                     .foreign_key(

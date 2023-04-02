@@ -7,7 +7,6 @@ pub struct AuthData {
     pub token: String,
 }
 
-
 #[derive(Serialize)]
 pub struct ShowData {
     pub id: Uuid,

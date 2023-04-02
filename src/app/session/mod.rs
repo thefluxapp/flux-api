@@ -1,4 +1,7 @@
-use axum::{Router, routing::{get, post}};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 
 use self::controller::SessionController;
 

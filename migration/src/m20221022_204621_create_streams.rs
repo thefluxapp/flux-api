@@ -13,12 +13,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Streams::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Streams::Id)
-                            .uuid()
-                            .not_null()
-                            .primary_key()
-                    )
+                    .col(ColumnDef::new(Streams::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Streams::Title).string())
                     .col(ColumnDef::new(Streams::UserId).uuid())
                     .foreign_key(
@@ -27,11 +22,7 @@ impl MigrationTrait for Migration {
                             .from(Streams::Table, Streams::UserId)
                             .to(Users::Table, Users::Id),
                     )
-                    .col(
-                        ColumnDef::new(Streams::CreatedAt)
-                            .date_time()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(Streams::CreatedAt).date_time().not_null())
                     .to_owned(),
             )
             .await

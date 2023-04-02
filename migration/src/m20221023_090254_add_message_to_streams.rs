@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::{m20221022_204621_create_streams::Streams, m20221016_114137_create_messages::Messages};
+use crate::{m20221016_114137_create_messages::Messages, m20221022_204621_create_streams::Streams};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -19,7 +19,7 @@ impl MigrationTrait for Migration {
                             .from_tbl(Streams::Table)
                             .from_col(Streams::MessageId)
                             .to_tbl(Messages::Table)
-                            .to_col(Messages::Id)
+                            .to_col(Messages::Id),
                     )
                     .to_owned(),
             )
