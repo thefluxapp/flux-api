@@ -13,14 +13,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Messages::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Messages::Id)
-                            .uuid()
-                            .not_null()
-                            .primary_key()
-                            .extra("default uuid_generate_v4()".to_string())
-                            ,
-                    )
+                    .col(ColumnDef::new(Messages::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Messages::Text).string().not_null())
                     .col(ColumnDef::new(Messages::UserId).uuid().not_null())
                     .foreign_key(

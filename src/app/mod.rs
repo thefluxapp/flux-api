@@ -5,10 +5,10 @@ use axum::{
     http::request::Parts,
     response::Response,
     routing::get,
-    routing::post,
     Extension, Router,
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use migration::{Migrator, MigratorTrait};
 use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
 use std::{env, net::SocketAddr, str::FromStr};
@@ -17,20 +17,22 @@ use self::users::entities;
 
 mod db;
 mod messages;
-mod sessions;
+mod session;
 mod streams;
 mod users;
 
 pub async fn run() {
     let pool = db::create_pool(&env::var("DATABASE_URL").unwrap()).await;
 
+    // TODO: Deal with it later
+    Migrator::up(&pool, None).await.unwrap();
+
     let app = Router::new()
         .nest(
             "/api",
             Router::new()
-                .route("/status", get(|| async {}))
-                .route("/session", get(sessions::show))
-                .route("/session/auth", post(sessions::auth))
+                .route("/healthz", get(|| async {}))
+                .nest("/session", session::router())
                 .nest("/messages", messages::router())
                 .nest("/streams", streams::router()),
         )
@@ -52,11 +54,15 @@ struct JwtUser {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
+    pub username: String,
 }
 
 impl From<entities::user::Model> for User {
     fn from(user: entities::user::Model) -> Self {
-        User { id: user.id }
+        User {
+            id: user.id,
+            username: user.username,
+        }
     }
 }
 

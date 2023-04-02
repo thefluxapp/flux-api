@@ -17,8 +17,7 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(MessagesStreams::Id)
                             .uuid()
                             .not_null()
-                            .primary_key()
-                            .extra("default uuid_generate_v4()".to_string()),
+                            .primary_key(),
                     )
                     .col(ColumnDef::new(MessagesStreams::MessageId).uuid().not_null())
                     .foreign_key(
@@ -37,8 +36,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(MessagesStreams::CreatedAt)
                             .date_time()
-                            .not_null()
-                            .extra("default now()".to_string()),
+                            .not_null(),
                     )
                     .to_owned(),
             )
