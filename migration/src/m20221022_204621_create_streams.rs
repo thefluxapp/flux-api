@@ -18,7 +18,6 @@ impl MigrationTrait for Migration {
                             .uuid()
                             .not_null()
                             .primary_key()
-                            .extra("default uuid_generate_v4()".to_string()),
                     )
                     .col(ColumnDef::new(Streams::Title).string())
                     .col(ColumnDef::new(Streams::UserId).uuid())
@@ -31,8 +30,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(Streams::CreatedAt)
                             .date_time()
-                            .not_null()
-                            .extra("default now()".to_string()),
+                            .not_null(),
                     )
                     .to_owned(),
             )

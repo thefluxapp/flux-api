@@ -18,7 +18,6 @@ impl MigrationTrait for Migration {
                             .uuid()
                             .not_null()
                             .primary_key()
-                            .extra("default uuid_generate_v4()".to_string())
                             ,
                     )
                     .col(ColumnDef::new(Messages::Text).string().not_null())
