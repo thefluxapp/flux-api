@@ -1,4 +1,5 @@
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set, TransactionTrait};
+use tracing::info;
 use validator::Validate;
 
 use super::{
@@ -22,6 +23,7 @@ impl MessagesService {
         pool: &DatabaseConnection,
         payload: CreateMessagePayload,
     ) -> CreateData {
+        info!("user={:#?}", user);
         payload.validate().unwrap();
 
         let stream = if let Some(message_id) = payload.message_id {
@@ -55,24 +57,36 @@ impl MessagesService {
         payload: CreateMessagePayload,
         stream: &entities::stream::Model,
     ) -> entities::message::Model {
+        info!("stream={:?}", stream);
+
         let txn = pool.begin().await.unwrap();
 
         let message = entities::message::ActiveModel {
             text: Set(payload.text),
             user_id: Set(user.id),
             ..Default::default()
-        };
-
-        let message: entities::message::Model = message.insert(&txn).await.unwrap();
+        }
+        .insert(&txn)
+        .await
+        .unwrap();
 
         entities::message_stream::ActiveModel {
             message_id: Set(message.id),
             stream_id: Set(stream.id),
             ..Default::default()
         }
-        .save(&txn)
+        .insert(&txn)
         .await
         .unwrap();
+
+        let task = entities::task::ActiveModel {
+            stream_id: Set(stream.id),
+            ..Default::default()
+        };
+
+        info!("created task={:?}", task);
+
+        task.insert(&txn).await.unwrap();
 
         txn.commit().await.unwrap();
 

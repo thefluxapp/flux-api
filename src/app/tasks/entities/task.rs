@@ -3,37 +3,28 @@ use sea_orm::{entity::prelude::*, Set};
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
-#[sea_orm(table_name = "streams")]
+#[sea_orm(table_name = "tasks")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub title: Option<String>,
-    pub user_id: Option<Uuid>,
-    pub message_id: Option<Uuid>,
+    pub stream_id: Uuid,
     pub created_at: DateTimeUtc,
+    pub failed_at: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::user::Entity",
-        from = "Column::UserId",
-        to = "super::user::Column::Id"
+        belongs_to = "super::stream::Entity",
+        from = "Column::StreamId",
+        to = "super::stream::Column::Id"
     )]
-    User,
-    #[sea_orm(has_many = "super::message_stream::Entity")]
-    MessageStream,
-    #[sea_orm(
-        belongs_to = "super::message::Entity",
-        from = "Column::MessageId",
-        to = "super::message::Column::Id"
-    )]
-    Message,
+    Stream,
 }
 
-impl Related<super::message::Entity> for Entity {
+impl Related<super::stream::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Message.def()
+        Relation::Stream.def()
     }
 }
 

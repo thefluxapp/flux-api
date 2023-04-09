@@ -19,6 +19,7 @@ mod db;
 mod messages;
 mod session;
 mod streams;
+mod tasks;
 mod users;
 
 pub async fn run() {
