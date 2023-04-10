@@ -6,7 +6,7 @@ mod app;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    tracing_subscriber::fmt().json().init();
+    tracing_subscriber::fmt().pretty().init();
 
-    app::run().await
+    app::run().await;
 }

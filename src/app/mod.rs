@@ -11,6 +11,7 @@ use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
 
 use self::users::entities;
@@ -27,6 +28,9 @@ pub async fn run() {
 
     // TODO: Deal with it later
     Migrator::up(&pool, None).await.unwrap();
+
+    // TODO: clone is ok?
+    tasks::executor::run(Arc::new(pool.clone())).await;
 
     let app = Router::new()
         .nest(
