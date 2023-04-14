@@ -1,42 +1,50 @@
-use std::time::Duration;
+use migration::LockType;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QuerySelect, TransactionTrait};
+use std::{sync::Arc, time::Duration};
+use tokio::time;
 
-// use migration::{LockBehavior, LockType};
-use sea_orm::{DatabaseConnection, EntityTrait, QuerySelect};
-use std::sync::Arc;
-use tokio_cron_scheduler::{Job, JobScheduler};
-use tracing::info;
+use super::{entities, repo::TasksRepo};
 
-use super::entities;
+pub struct TasksExecutor {}
 
-pub async fn run(pool: Arc<DatabaseConnection>) {
-    let schd = JobScheduler::new().await.unwrap();
+impl TasksExecutor {
+    pub fn process_tasks(db: &DatabaseConnection) {
+        let dbx = db.clone();
 
-    schd.add(
-        Job::new_repeated_async(Duration::from_secs(3), move |uuid, _l| {
-            let x = pool.clone();
+        tokio::spawn(async move {
+            let mut interval = time::interval(std::time::Duration::from_millis(500));
 
-            Box::pin(async move {
-                info!("I run every second: uuid={}", uuid);
-                process_batch(&x).await;
-            })
-        })
-        .unwrap(),
-    )
-    .await
-    .unwrap();
+            loop {
+                interval.tick().await;
 
-    schd.start().await.unwrap();
+                TasksExecutor::process_tasks_batch(&dbx).await;
+            }
+        });
+    }
+
+    async fn process_tasks_batch(db: &DatabaseConnection) {
+        let txn = db.begin().await.unwrap();
+
+        let mut query = entities::task::Entity::find().limit(2);
+
+        query
+            .query()
+            .and_where(entities::task::Column::ProcessedAt.is_null())
+            .lock_with_behavior(LockType::Update, migration::LockBehavior::SkipLocked);
+
+        let tasks = query.all(&txn).await.unwrap();
+
+        for task in tasks {
+            // emulate external service
+            tokio::time::sleep(Duration::from_millis(400)).await;
+
+            TasksRepo::mark_task_as_processed(&txn, task.into()).await;
+        }
+
+        txn.commit().await.unwrap();
+    }
 }
 
-async fn process_batch(pool: &DatabaseConnection) {
-    let tasks = entities::task::Entity::find()
-        .lock_exclusive()
-        .limit(5)
-        // .query()
-        // .lock_with_behavior(LockType::Update, LockBehavior::Nowait)
-        .all(pool)
-        .await
-        .unwrap();
-
-    info!("tasks={:#?}", tasks);
+pub async fn run(db: Arc<DatabaseConnection>) {
+    TasksExecutor::process_tasks(&db);
 }

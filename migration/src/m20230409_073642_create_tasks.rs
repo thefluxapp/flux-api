@@ -22,6 +22,7 @@ impl MigrationTrait for Migration {
                             .to(Streams::Table, Streams::Id),
                     )
                     .col(ColumnDef::new(Tasks::CreatedAt).date_time().not_null())
+                    .col(ColumnDef::new(Tasks::ProcessedAt).date_time())
                     .col(ColumnDef::new(Tasks::FailedAt).date_time())
                     .to_owned(),
             )
@@ -42,5 +43,6 @@ enum Tasks {
     Id,
     StreamId,
     CreatedAt,
+    ProcessedAt,
     FailedAt,
 }

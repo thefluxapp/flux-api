@@ -10,7 +10,7 @@ pub struct Model {
     pub title: Option<String>,
     pub user_id: Option<Uuid>,
     pub message_id: Option<Uuid>,
-    pub created_at: DateTimeUtc,
+    pub created_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -46,7 +46,7 @@ impl ActiveModelBehavior for ActiveModel {
     {
         if self.is_not_set(Column::Id) && insert {
             self.id = Set(Uuid::now_v7());
-            self.created_at = Set(Utc::now());
+            self.created_at = Set(Utc::now().naive_utc());
         }
 
         Ok(self)

@@ -7,7 +7,7 @@ pub async fn create_pool(url: &String) -> DatabaseConnection {
     opt.max_connections(15)
         .min_connections(5)
         .sqlx_logging(true)
-        .sqlx_logging_level(log::LevelFilter::Info);
+        .sqlx_logging_level(log::LevelFilter::Debug);
 
     Database::connect(opt).await.unwrap()
 }
