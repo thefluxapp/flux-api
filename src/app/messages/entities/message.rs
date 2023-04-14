@@ -1,10 +1,10 @@
-use sea_orm::entity::prelude::*;
+use sea_orm::{entity::prelude::*, Set};
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
 #[sea_orm(table_name = "messages")]
 pub struct Model {
-    #[sea_orm(primary_key)]
+    #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub text: String,
     pub user_id: Uuid,
@@ -36,4 +36,17 @@ impl Related<super::stream::Entity> for Entity {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+// TODO: DRY for all models
+#[async_trait::async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    async fn before_save<C>(mut self, _: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        if self.is_not_set(Column::Id) && insert {
+            self.id = Set(Uuid::now_v7());
+        }
+
+        Ok(self)
+    }
+}

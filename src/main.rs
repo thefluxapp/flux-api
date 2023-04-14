@@ -1,12 +1,13 @@
 use dotenv::dotenv;
-use tracing_subscriber;
 
 mod app;
+mod tracing;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    tracing_subscriber::fmt().json().init();
 
-    app::run().await
+    tracing::run();
+
+    app::run().await;
 }
