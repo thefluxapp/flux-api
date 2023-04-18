@@ -2,6 +2,9 @@ use migration::LockType;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QuerySelect, TransactionTrait};
 use std::{sync::Arc, time::Duration};
 use tokio::time;
+use tracing::info;
+
+use crate::app::state::AppState;
 
 use super::{entities, repo::TasksRepo};
 
@@ -45,6 +48,7 @@ impl TasksExecutor {
     }
 }
 
-pub async fn run(db: Arc<DatabaseConnection>) {
-    TasksExecutor::process_tasks(&db);
+pub async fn run(state: &Arc<AppState>) {
+    TasksExecutor::process_tasks(&state.db);
+    info!("Tasks executor start");
 }

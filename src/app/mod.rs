@@ -9,14 +9,17 @@ use axum::{
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
+use sea_orm::{prelude::Uuid, EntityTrait};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
+use tracing::info;
 
-use self::users::entities;
+use self::{state::AppState, users::entities};
 
 mod db;
+mod state;
+
 mod messages;
 mod session;
 mod streams;
@@ -24,13 +27,16 @@ mod tasks;
 mod users;
 
 pub async fn run() {
-    let pool = db::create_pool(&env::var("DATABASE_URL").unwrap()).await;
+    let state = Arc::new(AppState {
+        db: db::create_pool(&env::var("DATABASE_URL").unwrap()).await,
+    });
 
     // TODO: Deal with it later
-    Migrator::up(&pool, None).await.unwrap();
+    Migrator::up(&state.db, None).await.unwrap();
+    info!("Migrator finished");
 
-    // TODO: clone is ok?
-    tasks::executor::run(Arc::new(pool.clone())).await;
+    // Start tasks processor
+    tasks::executor::run(&state).await;
 
     let app = Router::new()
         .nest(
@@ -41,10 +47,11 @@ pub async fn run() {
                 .nest("/messages", messages::router())
                 .nest("/streams", streams::router()),
         )
-        .layer(Extension(pool));
+        .layer(Extension(state));
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
 
+    info!("App start on {}", &addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
@@ -91,12 +98,12 @@ where
         )
         .unwrap();
 
-        let Extension(pool) = Extension::<DatabaseConnection>::from_request_parts(parts, state)
+        let state = Extension::<Arc<AppState>>::from_request_parts(parts, state)
             .await
             .unwrap();
 
         let user: User = entities::user::Entity::find_by_id(jwt_user.claims.sub)
-            .one(&pool)
+            .one(&state.db)
             .await
             .unwrap()
             .unwrap()

@@ -1,19 +1,17 @@
 use axum::{Extension, Json};
-use sea_orm::DatabaseConnection;
-use tracing::info;
 
-use crate::app::session::{data::AuthData, service::SessionService};
+use crate::app::{
+    session::{data::AuthData, service::SessionService},
+    state::AppState,
+};
+use std::sync::Arc;
 
 use super::SessionController;
 
 impl SessionController {
-    pub async fn auth(Extension(pool): Extension<DatabaseConnection>) -> Json<AuthData> {
-        info!("started");
-
+    pub async fn auth(state: Extension<Arc<AppState>>) -> Json<AuthData> {
         // TODO: Return error if user exists
-        let (user, token) = SessionService::auth(&pool).await;
-
-        info!("success user={}, token={}", user.id, token);
+        let (user, token) = SessionService::auth(&state.db).await;
         Json(AuthData { id: user.id, token })
     }
 }
