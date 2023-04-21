@@ -51,12 +51,14 @@ pub async fn run() {
 
 pub enum AppError {
     EntityNotFound,
+    Forbidden,
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = match self {
             AppError::EntityNotFound => StatusCode::NOT_FOUND,
+            AppError::Forbidden => StatusCode::FORBIDDEN,
         };
 
         (status).into_response()
