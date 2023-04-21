@@ -5,13 +5,13 @@ use std::{
 
 use fake::Fake;
 use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use sea_orm::{ActiveModelTrait, DatabaseConnection, Set};
+use sea_orm::DatabaseConnection;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::app::streams::entities;
+use crate::app::{streams::entities, users::repo::UserRepo};
 
-use super::SessionService;
+use super::SessionServices;
 
 #[derive(Debug, Serialize)]
 pub struct AuthPayload {
@@ -19,15 +19,11 @@ pub struct AuthPayload {
     pub exp: u128,
 }
 
-impl SessionService {
-    pub async fn auth(pool: &DatabaseConnection) -> (entities::user::Model, String) {
-        let user = entities::user::ActiveModel {
-            id: Set(Uuid::now_v7()),
-            username: Set(fake::faker::internet::raw::Username(fake::locales::EN).fake()),
-            ..Default::default()
-        };
-        let user: entities::user::Model = user.insert(pool).await.unwrap();
-        let token = Self::generate_token(user.id);
+impl SessionServices {
+    pub async fn auth(db: &DatabaseConnection) -> (entities::user::Model, String) {
+        let username = fake::faker::internet::raw::Username(fake::locales::EN).fake();
+        let user = UserRepo::create_user(username, db).await;
+        let token = SessionServices::generate_token(user.id);
 
         (user, token)
     }
@@ -49,4 +45,10 @@ impl SessionService {
         )
         .unwrap()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn routing_to_auth() {}
 }

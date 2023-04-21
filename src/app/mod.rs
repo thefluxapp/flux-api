@@ -1,22 +1,16 @@
-use axum::{
-    async_trait,
-    extract::{FromRequestParts, TypedHeader},
-    headers::{authorization::Bearer, Authorization},
-    http::request::Parts,
-    response::Response,
-    routing::get,
-    Extension, Router,
-};
-use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
+use axum::{routing::get, Extension, Router};
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{prelude::Uuid, DatabaseConnection, EntityTrait};
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
+use tracing::info;
 
-use self::users::entities;
+use self::state::AppState;
 
 mod db;
+mod state;
+
 mod messages;
 mod session;
 mod streams;
@@ -24,13 +18,16 @@ mod tasks;
 mod users;
 
 pub async fn run() {
-    let pool = db::create_pool(&env::var("DATABASE_URL").unwrap()).await;
+    let state = Arc::new(AppState {
+        db: db::create_pool(&env::var("DATABASE_URL").unwrap()).await,
+    });
 
     // TODO: Deal with it later
-    Migrator::up(&pool, None).await.unwrap();
+    Migrator::up(&state.db, None).await.unwrap();
+    info!("Migrator finished");
 
-    // TODO: clone is ok?
-    tasks::executor::run(Arc::new(pool.clone())).await;
+    // Start tasks processor
+    tasks::executor::run(&state).await;
 
     let app = Router::new()
         .nest(
@@ -41,67 +38,29 @@ pub async fn run() {
                 .nest("/messages", messages::router())
                 .nest("/streams", streams::router()),
         )
-        .layer(Extension(pool));
+        .layer(Extension(state));
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
 
+    info!("App start on {}", &addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
 
-#[derive(Debug, Deserialize)]
-struct JwtUser {
-    pub sub: Uuid,
+pub enum AppError {
+    EntityNotFound,
+    Forbidden,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct User {
-    pub id: Uuid,
-    pub username: String,
-}
+impl IntoResponse for AppError {
+    fn into_response(self) -> Response {
+        let status = match self {
+            AppError::EntityNotFound => StatusCode::NOT_FOUND,
+            AppError::Forbidden => StatusCode::FORBIDDEN,
+        };
 
-impl From<entities::user::Model> for User {
-    fn from(user: entities::user::Model) -> Self {
-        User {
-            id: user.id,
-            username: user.username,
-        }
-    }
-}
-
-#[async_trait]
-impl<S> FromRequestParts<S> for User
-where
-    S: Send + Sync,
-{
-    type Rejection = Response;
-
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let TypedHeader(Authorization(bearer)) =
-            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
-                .await
-                .unwrap();
-
-        let jwt_user = decode::<JwtUser>(
-            bearer.token(),
-            &DecodingKey::from_rsa_pem(&env::var("AUTH_PUBLIC_KEY").unwrap().into_bytes()).unwrap(),
-            &Validation::new(Algorithm::RS256),
-        )
-        .unwrap();
-
-        let Extension(pool) = Extension::<DatabaseConnection>::from_request_parts(parts, state)
-            .await
-            .unwrap();
-
-        let user: User = entities::user::Entity::find_by_id(jwt_user.claims.sub)
-            .one(&pool)
-            .await
-            .unwrap()
-            .unwrap()
-            .into();
-
-        Ok(user)
+        (status).into_response()
     }
 }
