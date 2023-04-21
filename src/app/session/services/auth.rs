@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use crate::app::{streams::entities, users::repo::UserRepo};
 
-use super::SessionService;
+use super::SessionServices;
 
 #[derive(Debug, Serialize)]
 pub struct AuthPayload {
@@ -19,11 +19,11 @@ pub struct AuthPayload {
     pub exp: u128,
 }
 
-impl SessionService {
+impl SessionServices {
     pub async fn auth(db: &DatabaseConnection) -> (entities::user::Model, String) {
         let username = fake::faker::internet::raw::Username(fake::locales::EN).fake();
         let user = UserRepo::create_user(username, db).await;
-        let token = SessionService::generate_token(user.id);
+        let token = SessionServices::generate_token(user.id);
 
         (user, token)
     }

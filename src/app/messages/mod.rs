@@ -1,35 +1,17 @@
-mod data;
+pub mod data;
 pub mod entities;
-mod payload;
-mod service;
+mod services;
 
 use axum::{
     routing::{get, post},
-    Extension, Json, Router,
+    Router,
 };
-use sea_orm::DatabaseConnection;
 
-use self::{
-    data::{CreateData, IndexData},
-    payload::CreateMessagePayload,
-    service::MessagesService,
-};
-use super::User;
+use self::controllers::MessagesControllers;
+mod controllers;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/", get(index))
-        .route("/", post(create))
-}
-
-async fn index() -> Json<IndexData> {
-    Json(MessagesService::index())
-}
-
-async fn create(
-    user: User,
-    Extension(pool): Extension<DatabaseConnection>,
-    Json(payload): Json<CreateMessagePayload>,
-) -> Json<CreateData> {
-    Json(MessagesService::create(&user, &pool, payload).await)
+        .route("/", get(MessagesControllers::index))
+        .route("/", post(MessagesControllers::create))
 }
