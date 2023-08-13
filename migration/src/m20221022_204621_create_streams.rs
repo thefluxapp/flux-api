@@ -18,7 +18,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Streams::UserId).uuid())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-streams-user-id")
+                            .name("fk_streams_user_id")
                             .from(Streams::Table, Streams::UserId)
                             .to(Users::Table, Users::Id),
                     )

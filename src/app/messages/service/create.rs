@@ -32,16 +32,16 @@ impl MessagesService {
             StreamsServices::find_or_create_by_user(user, db).await
         };
 
-        let active_message = entities::message::ActiveModel {
+        let message = entities::message::ActiveModel {
             text: Set(request_data.text),
             user_id: Set(user.id),
             ..Default::default()
         };
 
         db.transaction::<_, _, DbErr>(|txn| {
-            Box::pin(async move {
-                Ok(MessagesRepo::create_with_stream(txn, active_message, stream).await)
-            })
+            Box::pin(
+                async move { Ok(MessagesRepo::create_with_stream(txn, message, stream).await) },
+            )
         })
         .await
         .unwrap()

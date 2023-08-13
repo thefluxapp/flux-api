@@ -1,15 +1,16 @@
-use chrono::Utc;
-use sea_orm::{entity::prelude::*, Set};
+use sea_orm::entity::prelude::*;
 use serde::Serialize;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
-#[sea_orm(table_name = "tasks")]
+#[sea_orm(table_name = "stream_tasks")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub stream_id: Uuid,
     pub created_at: DateTime,
     pub processed_at: Option<DateTime>,
+    pub started_at: Option<DateTime>,
+    pub started_by: Option<Uuid>,
     pub failed_at: Option<String>,
 }
 
@@ -29,18 +30,4 @@ impl Related<super::stream::Entity> for Entity {
     }
 }
 
-// TODO: DRY for all models
-#[async_trait::async_trait]
-impl ActiveModelBehavior for ActiveModel {
-    async fn before_save<C>(mut self, _: &C, insert: bool) -> Result<Self, DbErr>
-    where
-        C: ConnectionTrait,
-    {
-        if self.is_not_set(Column::Id) && insert {
-            self.id = Set(Uuid::now_v7());
-            self.created_at = Set(Utc::now().naive_utc());
-        }
-
-        Ok(self)
-    }
-}
+impl ActiveModelBehavior for ActiveModel {}

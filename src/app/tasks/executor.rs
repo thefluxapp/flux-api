@@ -1,12 +1,11 @@
-use migration::LockType;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QuerySelect, TransactionTrait};
-use std::{sync::Arc, time::Duration};
+use sea_orm::DatabaseConnection;
+use std::sync::Arc;
 use tokio::time;
 use tracing::info;
 
 use crate::app::state::AppState;
 
-use super::{entities, repo::TasksRepo};
+use super::service::TasksService;
 
 pub struct TasksExecutor {}
 
@@ -15,36 +14,14 @@ impl TasksExecutor {
         let dbx = db.clone();
 
         tokio::spawn(async move {
-            let mut interval = time::interval(std::time::Duration::from_millis(500));
+            let mut interval = time::interval(std::time::Duration::from_millis(5000));
 
             loop {
                 interval.tick().await;
 
-                TasksExecutor::process_tasks_batch(&dbx).await;
+                TasksService::process_streams_tasks(&dbx).await;
             }
         });
-    }
-
-    async fn process_tasks_batch(db: &DatabaseConnection) {
-        let txn = db.begin().await.unwrap();
-
-        let mut query = entities::task::Entity::find().limit(2);
-
-        query
-            .query()
-            .and_where(entities::task::Column::ProcessedAt.is_null())
-            .lock_with_behavior(LockType::Update, migration::LockBehavior::SkipLocked);
-
-        let tasks = query.all(&txn).await.unwrap();
-
-        for task in tasks {
-            // emulate external service
-            tokio::time::sleep(Duration::from_millis(400)).await;
-
-            TasksRepo::mark_task_as_processed(&txn, task.into()).await;
-        }
-
-        txn.commit().await.unwrap();
     }
 }
 

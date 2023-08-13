@@ -5,6 +5,7 @@ use self::controllers::StreamsControllers;
 pub mod controllers;
 pub mod data;
 pub mod entities;
+pub mod repo;
 pub mod services;
 
 pub fn router() -> Router {

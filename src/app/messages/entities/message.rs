@@ -1,3 +1,4 @@
+use chrono::Utc;
 use sea_orm::{entity::prelude::*, Set};
 use serde::Serialize;
 
@@ -8,6 +9,7 @@ pub struct Model {
     pub id: Uuid,
     pub text: String,
     pub user_id: Uuid,
+    pub created_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -45,6 +47,7 @@ impl ActiveModelBehavior for ActiveModel {
     {
         if self.is_not_set(Column::Id) && insert {
             self.id = Set(Uuid::now_v7());
+            self.created_at = Set(Utc::now().naive_utc());
         }
 
         Ok(self)
