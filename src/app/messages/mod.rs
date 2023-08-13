@@ -1,6 +1,7 @@
 mod controller;
 pub mod data;
 pub mod entities;
+mod repo;
 mod service;
 
 use axum::{
