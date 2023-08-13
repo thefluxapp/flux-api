@@ -5,9 +5,9 @@ use validator::Validate;
 use crate::app::streams::services::StreamsServices;
 
 use super::super::{data::create::RequestData, entities};
-use super::MessagesServices;
+use super::MessagesService;
 
-impl MessagesServices {
+impl MessagesService {
     pub async fn create(
         user: &entities::user::Model,
         db: &DatabaseConnection,
@@ -33,7 +33,7 @@ impl MessagesServices {
             StreamsServices::find_or_create_by_user(user, db).await
         };
 
-        MessagesServices::create_with_stream(user, db, request_data, &stream).await
+        MessagesService::create_with_stream(user, db, request_data, &stream).await
     }
 
     async fn create_with_stream(

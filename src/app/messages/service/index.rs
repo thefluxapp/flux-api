@@ -1,6 +1,6 @@
-use super::MessagesServices;
+use super::MessagesService;
 
-impl MessagesServices {
+impl MessagesService {
     pub async fn index() -> String {
         String::from("MESSAGES")
     }

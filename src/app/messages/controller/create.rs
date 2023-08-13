@@ -3,13 +3,11 @@ use std::sync::Arc;
 
 use super::{
     super::data::create::{RequestData, ResponseData},
-    MessagesControllers,
+    MessagesController,
 };
-use crate::app::{
-    messages::services::MessagesServices, session::Session, state::AppState, AppError,
-};
+use crate::app::{messages::service::MessagesService, session::Session, state::AppState, AppError};
 
-impl MessagesControllers {
+impl MessagesController {
     pub async fn create(
         session: Session,
         state: Extension<Arc<AppState>>,
@@ -17,7 +15,7 @@ impl MessagesControllers {
     ) -> Result<Json<ResponseData>, AppError> {
         match session.user {
             Some(user) => Ok(Json(
-                MessagesServices::create(&user, &state.db, request_data)
+                MessagesService::create(&user, &state.db, request_data)
                     .await
                     .into(),
             )),

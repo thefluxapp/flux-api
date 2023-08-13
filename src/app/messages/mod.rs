@@ -1,17 +1,17 @@
+mod controller;
 pub mod data;
 pub mod entities;
-mod services;
+mod service;
 
 use axum::{
     routing::{get, post},
     Router,
 };
 
-use self::controllers::MessagesControllers;
-mod controllers;
+use self::controller::MessagesController;
 
 pub fn router() -> Router {
     Router::new()
-        .route("/", get(MessagesControllers::index))
-        .route("/", post(MessagesControllers::create))
+        .route("/", get(MessagesController::index))
+        .route("/", post(MessagesController::create))
 }
