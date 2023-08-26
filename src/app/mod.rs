@@ -1,40 +1,42 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::{routing::get, Extension, Router};
+use axum::{routing::get, Router};
 use migration::{Migrator, MigratorTrait};
+use sea_orm::DatabaseConnection;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
 use tracing::info;
-
-use self::state::AppState;
+use uuid::Uuid;
+use webauthn_rs::prelude::Url;
+use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 mod db;
-mod state;
 
+mod auth;
 mod messages;
-mod session;
+// mod session;
 mod streams;
-mod tasks;
+// mod tasks;
 mod users;
 
 pub async fn run() {
-    let state = Arc::new(AppState {
-        db: db::create_pool(&env::var("DATABASE_URL").unwrap()).await,
-    });
+    let state = AppState::new().await;
 
     // TODO: Deal with it later
-    Migrator::up(&state.db, None).await.unwrap();
+    Migrator::up(state.db.as_ref(), None).await.unwrap();
     info!("Migrator finished");
 
     // Start tasks processor
-    tasks::executor::run(&state).await;
+    // tasks::executor::run(&state).await;
 
     let app = Router::new()
         .route("/healthz", get(|| async {}))
-        .nest("/session", session::router())
+        .nest("/auth", auth::router())
+        // .nest("/session", session::router())
         .nest("/messages", messages::router())
         .nest("/streams", streams::router())
-        .layer(Extension(state));
+        .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
 
@@ -59,4 +61,35 @@ impl IntoResponse for AppError {
 
         (status).into_response()
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct AppState {
+    pub db: Arc<DatabaseConnection>,
+    pub webauthn: Arc<Webauthn>,
+}
+
+impl AppState {
+    async fn new() -> Self {
+        let db = Arc::new(db::create_pool(&env::var("DATABASE_URL").unwrap()).await);
+
+        let rp_origin = Url::parse("http://localhost:5173").unwrap();
+        let builder = WebauthnBuilder::new("localhost", &rp_origin)
+            .unwrap()
+            .rp_name("Flux");
+
+        let webauthn = Arc::new(builder.build().unwrap());
+
+        AppState { db, webauthn }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppSession {
+    pub user: Option<users::entities::user::Model>,
+}
+
+#[derive(Debug, Deserialize)]
+struct JwtUser {
+    pub sub: Uuid,
 }

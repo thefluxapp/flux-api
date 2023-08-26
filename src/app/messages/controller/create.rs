@@ -1,16 +1,18 @@
-use axum::{Extension, Json};
-use std::sync::Arc;
+use axum::{extract::State, Json};
 
 use super::{
-    super::data::create::{RequestData, ResponseData},
+    super::{
+        data::create::{RequestData, ResponseData},
+        service::MessagesService,
+    },
     MessagesController,
 };
-use crate::app::{messages::service::MessagesService, session::Session, state::AppState, AppError};
+use crate::app::{AppError, AppSession, AppState};
 
 impl MessagesController {
     pub async fn create(
-        session: Session,
-        state: Extension<Arc<AppState>>,
+        session: AppSession,
+        State(state): State<AppState>,
         Json(request_data): Json<RequestData>,
     ) -> Result<Json<ResponseData>, AppError> {
         match session.user {

@@ -24,4 +24,8 @@ impl StreamsRepo {
             .await
             .unwrap();
     }
+
+    pub async fn find_all_streams<T: ConnectionTrait>(db: &T) -> Vec<entities::stream::Model> {
+        entities::stream::Entity::find().all(db).await.unwrap()
+    }
 }

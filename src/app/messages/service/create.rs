@@ -1,7 +1,7 @@
 use sea_orm::{DatabaseConnection, DbErr, EntityTrait, Set, TransactionTrait};
 use validator::Validate;
 
-use crate::app::streams::services::StreamsServices;
+use crate::app::streams::service::StreamsService;
 
 use super::super::{data::create::RequestData, entities, repo::MessagesRepo};
 use super::MessagesService;
@@ -21,7 +21,7 @@ impl MessagesService {
                 .unwrap()
                 .unwrap();
 
-            StreamsServices::find_or_create_by_message(message, db).await
+            StreamsService::find_or_create_by_message(message, db).await
         } else if let Some(stream_id) = request_data.stream_id {
             entities::stream::Entity::find_by_id(stream_id)
                 .one(db)
@@ -29,7 +29,7 @@ impl MessagesService {
                 .unwrap()
                 .unwrap()
         } else {
-            StreamsServices::find_or_create_by_user(user, db).await
+            StreamsService::find_or_create_by_user(user, db).await
         };
 
         let message = entities::message::ActiveModel {
