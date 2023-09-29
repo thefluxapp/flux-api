@@ -8,6 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     pub title: Option<String>,
+    pub text: Option<String>,
     pub user_id: Option<Uuid>,
     pub message_id: Option<Uuid>,
     pub created_at: DateTime,
@@ -34,6 +35,12 @@ pub enum Relation {
 impl Related<super::message::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Message.def()
+    }
+}
+
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
     }
 }
 

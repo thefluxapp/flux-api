@@ -1,4 +1,4 @@
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, LoaderTrait, QueryFilter};
 use uuid::Uuid;
 
 use crate::app::AppError;
@@ -12,7 +12,9 @@ impl StreamsService {
     ) -> Result<
         (
             entities::stream::Model,
-            Vec<(entities::message::Model, Option<entities::stream::Model>)>,
+            Vec<entities::message::Model>,
+            Vec<Option<entities::user::Model>>,
+            Vec<Option<entities::stream::Model>>,
         ),
         AppError,
     > {
@@ -25,28 +27,33 @@ impl StreamsService {
             None => return Err(AppError::EntityNotFound),
         };
 
-        // let messages = entities::message::Entity::find()
-        //     .inner_join(entities::message_stream::Entity)
-        //     .filter(entities::message_stream::Column::StreamId.eq(stream.id))
-        //     .all(pool)
-        //     .await
-        //     .unwrap();
+        let (messages, users, streams) =
+            Self::find_messages_with_streams_by_stream(db, stream.id).await;
 
-        let messages = Self::find_messages_with_streams_by_stream(stream.id, db).await;
-
-        Ok((stream, messages))
+        Ok((stream, messages, users, streams))
     }
 
     async fn find_messages_with_streams_by_stream(
+        db: &DatabaseConnection,
         stream_id: Uuid,
-        pool: &DatabaseConnection,
-    ) -> Vec<(entities::message::Model, Option<entities::stream::Model>)> {
-        entities::message::Entity::find()
+    ) -> (
+        Vec<entities::message::Model>,
+        Vec<Option<entities::user::Model>>,
+        Vec<Option<entities::stream::Model>>,
+    ) {
+        let messages = entities::message::Entity::find()
             .inner_join(entities::message_stream::Entity)
-            .find_also_related(entities::stream::Entity)
             .filter(entities::message_stream::Column::StreamId.eq(stream_id))
-            .all(pool)
+            .all(db)
             .await
-            .unwrap()
+            .unwrap();
+
+        let users = messages.load_one(entities::user::Entity, db).await.unwrap();
+        let streams = messages
+            .load_one(entities::stream::Entity, db)
+            .await
+            .unwrap();
+
+        (messages, users, streams)
     }
 }

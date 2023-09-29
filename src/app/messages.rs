@@ -7,7 +7,7 @@ use super::AppState;
 mod controller;
 pub mod data;
 pub mod entities;
-mod repo;
+pub mod repo;
 mod service;
 
 // use axum::{

@@ -1,4 +1,7 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter,
+    Set,
+};
 
 use super::entities;
 
@@ -30,13 +33,13 @@ impl StreamsService {
         }
     }
 
-    pub async fn find_or_create_by_message(
+    pub async fn find_or_create_by_message<T: ConnectionTrait>(
         message: entities::message::Model,
-        pool: &DatabaseConnection,
+        db: &T,
     ) -> entities::stream::Model {
         match entities::stream::Entity::find()
             .filter(entities::stream::Column::MessageId.eq(message.id))
-            .one(pool)
+            .one(db)
             .await
             .unwrap()
         {
@@ -47,7 +50,20 @@ impl StreamsService {
                     ..Default::default()
                 };
 
-                stream.insert(pool).await.unwrap()
+                // TODO: use txn
+
+                let stream = stream.insert(db).await.unwrap();
+
+                entities::message_stream::ActiveModel {
+                    message_id: Set(message.id),
+                    stream_id: Set(stream.id),
+                    ..Default::default()
+                }
+                .insert(db)
+                .await
+                .unwrap();
+
+                stream
             }
         }
     }

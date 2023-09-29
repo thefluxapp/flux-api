@@ -15,6 +15,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Streams::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Streams::Title).string())
+                    .col(ColumnDef::new(Streams::Text).text())
                     .col(ColumnDef::new(Streams::UserId).uuid())
                     .foreign_key(
                         ForeignKey::create()
@@ -41,6 +42,7 @@ pub enum Streams {
     Table,
     Id,
     Title,
+    Text,
     UserId,
     MessageId,
     CreatedAt,

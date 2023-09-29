@@ -1,6 +1,7 @@
 use axum::{extract::State, Json};
 use sea_orm::{ActiveValue::NotSet, Set};
 use uuid::Uuid;
+use validator::Validate;
 use webauthn_rs::prelude::{CreationChallengeResponse, Passkey, RequestChallengeResponse};
 
 use crate::app::{auth::data::join::RequestData, users::repo::UsersRepo, AppState};
@@ -13,9 +14,10 @@ use super::{
 impl AuthController {
     pub async fn join(
         State(state): State<AppState>,
-        Json(data): Json<RequestData>,
+        Json(request_data): Json<RequestData>,
     ) -> Json<ResponseData> {
-        let email = data.email;
+        request_data.validate().unwrap();
+        let email = request_data.email.to_lowercase();
 
         let user = UsersRepo::find_user_by_email(state.db.as_ref(), &email).await;
 

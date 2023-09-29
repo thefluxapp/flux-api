@@ -14,7 +14,7 @@ impl MigrationTrait for Migration {
                     .table(Messages::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Messages::Id).uuid().not_null().primary_key())
-                    .col(ColumnDef::new(Messages::Text).string().not_null())
+                    .col(ColumnDef::new(Messages::Text).text().not_null())
                     .col(ColumnDef::new(Messages::UserId).uuid().not_null())
                     .col(ColumnDef::new(Messages::CreatedAt).date_time().not_null())
                     .foreign_key(

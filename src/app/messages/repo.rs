@@ -1,4 +1,8 @@
-use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect,
+    RelationTrait, Set,
+};
+use uuid::Uuid;
 
 use super::entities;
 use crate::app::streams::repo::StreamsRepo;
@@ -25,5 +29,24 @@ impl MessagesRepo {
         StreamsRepo::create_task(db, stream).await;
 
         message
+    }
+
+    pub async fn get_by_stream<T: ConnectionTrait>(
+        db: &T,
+        stream_id: Uuid,
+    ) -> Vec<(
+        entities::message::Model,
+        std::option::Option<entities::user::Model>,
+    )> {
+        entities::message::Entity::find()
+            .find_also_related(entities::user::Entity)
+            .filter(entities::message_stream::Column::StreamId.eq(stream_id))
+            .join(
+                sea_orm::JoinType::InnerJoin,
+                entities::message::Relation::MessageStream.def(),
+            )
+            .all(db)
+            .await
+            .unwrap()
     }
 }

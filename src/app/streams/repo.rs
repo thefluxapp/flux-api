@@ -1,6 +1,6 @@
 use chrono::Utc;
 use migration::OnConflict;
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use sea_orm::{ConnectionTrait, Set};
 use uuid::Uuid;
 
@@ -25,7 +25,14 @@ impl StreamsRepo {
             .unwrap();
     }
 
-    pub async fn find_all_streams<T: ConnectionTrait>(db: &T) -> Vec<entities::stream::Model> {
-        entities::stream::Entity::find().all(db).await.unwrap()
+    pub async fn find_all_user_streams<T: ConnectionTrait>(
+        db: &T,
+    ) -> Vec<(entities::stream::Model, Option<entities::user::Model>)> {
+        entities::stream::Entity::find()
+            .find_also_related(entities::user::Entity)
+            .filter(entities::stream::Column::MessageId.is_null())
+            .all(db)
+            .await
+            .unwrap()
     }
 }

@@ -38,6 +38,12 @@ impl Related<super::stream::Entity> for Entity {
     }
 }
 
+impl Related<super::user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::User.def()
+    }
+}
+
 // TODO: DRY for all models
 #[async_trait::async_trait]
 impl ActiveModelBehavior for ActiveModel {

@@ -11,7 +11,7 @@ pub struct Model {
     pub processed_at: Option<DateTime>,
     pub started_at: Option<DateTime>,
     pub started_by: Option<Uuid>,
-    pub failed_at: Option<String>,
+    pub failed_at: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

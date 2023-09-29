@@ -17,7 +17,8 @@ mod auth;
 mod messages;
 // mod session;
 mod streams;
-// mod tasks;
+mod summarizer;
+mod tasks;
 mod users;
 
 pub async fn run() {
@@ -28,7 +29,7 @@ pub async fn run() {
     info!("Migrator finished");
 
     // Start tasks processor
-    // tasks::executor::run(&state).await;
+    tasks::executor::run(&state).await;
 
     let app = Router::new()
         .route("/healthz", get(|| async {}))
@@ -73,8 +74,9 @@ impl AppState {
     async fn new() -> Self {
         let db = Arc::new(db::create_pool(&env::var("DATABASE_URL").unwrap()).await);
 
-        let rp_origin = Url::parse("http://localhost:5173").unwrap();
-        let builder = WebauthnBuilder::new("localhost", &rp_origin)
+        let rp_origin = Url::parse(&env::var("AUTH_RP_ORIGIN").unwrap()).unwrap();
+        let rp_id = env::var("AUTH_RP_ID").unwrap();
+        let builder = WebauthnBuilder::new(&rp_id, &rp_origin)
             .unwrap()
             .rp_name("Flux");
 

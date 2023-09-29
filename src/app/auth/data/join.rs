@@ -1,9 +1,11 @@
 use super::super::entities;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use webauthn_rs::prelude::{CreationChallengeResponse, RequestChallengeResponse};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate)]
 pub struct RequestData {
+    #[validate(email)]
     pub email: String,
 }
 

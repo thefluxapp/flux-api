@@ -16,6 +16,15 @@ pub struct Model {
     pub updated_at: DateTime,
 }
 
+impl Model {
+    pub fn name(&self) -> String {
+        match &self.first_name {
+            Some(first_name) => first_name.clone(),
+            _ => self.email.clone(),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {}
 

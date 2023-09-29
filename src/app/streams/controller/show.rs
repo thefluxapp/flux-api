@@ -18,8 +18,8 @@ impl StreamsController {
         Path(stream_id): Path<Uuid>,
         State(state): State<AppState>,
     ) -> Result<Json<ResponseData>, AppError> {
-        let (stream, messages) = StreamsService::show(&state.db, stream_id).await?;
+        let (stream, messages, users, streams) = StreamsService::show(&state.db, stream_id).await?;
 
-        Ok(Json((stream, messages).into()))
+        Ok(Json((stream, messages, users, streams).into()))
     }
 }

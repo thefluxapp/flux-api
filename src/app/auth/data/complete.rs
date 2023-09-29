@@ -1,12 +1,17 @@
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use webauthn_rs::prelude::RegisterPublicKeyCredential;
 
 use super::{super::entities, user::User};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct RequestData {
     pub id: String,
     pub reg: RegisterPublicKeyCredential,
+    #[validate(length(min = 3))]
+    pub first_name: String,
+    #[validate(length(min = 3))]
+    pub last_name: String,
 }
 
 #[derive(Serialize)]

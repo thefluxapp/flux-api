@@ -14,12 +14,14 @@ impl UsersRepo {
         db: &T,
         user_id: Uuid,
         email: String,
+        first_name: String,
+        last_name: String,
         passkey: Option<Passkey>,
     ) -> entities::user::Model {
         let user = entities::user::ActiveModel {
             id: Set(user_id),
-            first_name: NotSet,
-            last_name: NotSet,
+            first_name: Set(Some(first_name)),
+            last_name: Set(Some(last_name)),
             email: Set(email),
             passkeys: match passkey {
                 Some(passkey) => Set(serde_json::to_value(vec![passkey]).unwrap()),

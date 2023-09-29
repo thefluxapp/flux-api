@@ -14,6 +14,8 @@ impl AuthService {
         webauthn: &Webauthn,
         auth_state_id: String,
         reg: RegisterPublicKeyCredential,
+        first_name: String,
+        last_name: String,
     ) -> entities::user::Model {
         let txn = db.begin().await.unwrap();
         let auth_state = AuthRepo::find_auth_state_by_id(&txn, &auth_state_id).await;
@@ -29,6 +31,8 @@ impl AuthService {
             &txn,
             auth_state.user_id.clone(),
             auth_state.email.clone(),
+            first_name,
+            last_name,
             Some(passkey),
         )
         .await;
