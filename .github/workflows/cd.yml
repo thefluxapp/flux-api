@@ -20,6 +20,6 @@ jobs:
           # build-args: |
           #   APP_VERSION=${{ github.event.release.tag_name }}
           push: true
-          # bragovo/flux-app:${{ github.event.release.tag_name }}
+          # bragovo/flux-api:${{ github.event.release.tag_name }}
           tags: |
-            bragovo/flux-app:latest
+            bragovo/flux-api:latest
