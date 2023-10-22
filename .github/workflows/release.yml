@@ -1,9 +1,9 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types:
+      - published
 
 jobs:
   push_to_dockerhub:
@@ -20,5 +20,7 @@ jobs:
       - uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           file: ./.github/workflows/Dockerfile
+          # build-args: |
+          #   APP_VERSION=${{ github.event.release.tag_name }}
           push: true
-          tags: bragovo/flux-api:latest
+          tags: bragovo/flux-api:${{ github.event.release.tag_name }}
