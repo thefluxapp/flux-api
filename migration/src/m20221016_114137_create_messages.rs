@@ -14,11 +14,12 @@ impl MigrationTrait for Migration {
                     .table(Messages::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Messages::Id).uuid().not_null().primary_key())
-                    .col(ColumnDef::new(Messages::Text).string().not_null())
+                    .col(ColumnDef::new(Messages::Text).text().not_null())
                     .col(ColumnDef::new(Messages::UserId).uuid().not_null())
+                    .col(ColumnDef::new(Messages::CreatedAt).date_time().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-messages-user-id")
+                            .name("fk_messages_user_id")
                             .from(Messages::Table, Messages::UserId)
                             .to(Users::Table, Users::Id),
                     )
@@ -41,4 +42,5 @@ pub enum Messages {
     Id,
     Text,
     UserId,
+    CreatedAt,
 }

@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
                     .add_column(ColumnDef::new(Streams::MessageId).uuid())
                     .add_foreign_key(
                         &TableForeignKey::new()
-                            .name("fk-streams-message-id")
+                            .name("fk_streams_message_id")
                             .from_tbl(Streams::Table)
                             .from_col(Streams::MessageId)
                             .to_tbl(Messages::Table)
@@ -31,7 +31,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Streams::Table)
-                    .drop_foreign_key(Alias::new("fk-streams-message-id"))
+                    .drop_foreign_key(Alias::new("fk_streams_message_id"))
                     .drop_column(Alias::new("message_id"))
                     .to_owned(),
             )

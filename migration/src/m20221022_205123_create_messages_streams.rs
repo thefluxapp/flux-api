@@ -22,14 +22,14 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(MessagesStreams::MessageId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-messages-streams-message-id")
+                            .name("fk_messages_streams_message_id")
                             .from(MessagesStreams::Table, MessagesStreams::MessageId)
                             .to(Messages::Table, Messages::Id),
                     )
                     .col(ColumnDef::new(MessagesStreams::StreamId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk-messages-streams-stream-id")
+                            .name("fk_messages_streams_stream_id")
                             .from(MessagesStreams::Table, MessagesStreams::StreamId)
                             .to(Streams::Table, Streams::Id),
                     )

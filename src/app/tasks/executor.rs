@@ -1,54 +1,38 @@
-use migration::LockType;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QuerySelect, TransactionTrait};
-use std::{sync::Arc, time::Duration};
-use tokio::time;
+use sea_orm::DatabaseConnection;
+use std::time::Duration;
+use tokio::time::{self, MissedTickBehavior};
+use tokio_stream::wrappers::IntervalStream;
+use tokio_stream::StreamExt;
 use tracing::info;
 
-use crate::app::state::AppState;
+use crate::app::{summarizer::Summarizer, AppState};
 
-use super::{entities, repo::TasksRepo};
+use super::service::TasksService;
 
 pub struct TasksExecutor {}
 
 impl TasksExecutor {
     pub fn process_tasks(db: &DatabaseConnection) {
-        let dbx = db.clone();
+        let tasks_service = TasksService {
+            db: db.clone(),
+            summarizer: Summarizer::new(),
+        };
+
+        let mut inteval = time::interval(Duration::from_millis(1000));
+        inteval.set_missed_tick_behavior(MissedTickBehavior::Delay);
+
+        let mut stream = IntervalStream::new(inteval);
 
         tokio::spawn(async move {
-            let mut interval = time::interval(std::time::Duration::from_millis(500));
-
-            loop {
-                interval.tick().await;
-
-                TasksExecutor::process_tasks_batch(&dbx).await;
+            while let Some(_ts) = stream.next().await {
+                tasks_service.process_stream_tasks().await;
             }
         });
     }
-
-    async fn process_tasks_batch(db: &DatabaseConnection) {
-        let txn = db.begin().await.unwrap();
-
-        let mut query = entities::task::Entity::find().limit(2);
-
-        query
-            .query()
-            .and_where(entities::task::Column::ProcessedAt.is_null())
-            .lock_with_behavior(LockType::Update, migration::LockBehavior::SkipLocked);
-
-        let tasks = query.all(&txn).await.unwrap();
-
-        for task in tasks {
-            // emulate external service
-            tokio::time::sleep(Duration::from_millis(400)).await;
-
-            TasksRepo::mark_task_as_processed(&txn, task.into()).await;
-        }
-
-        txn.commit().await.unwrap();
-    }
 }
 
-pub async fn run(state: &Arc<AppState>) {
+pub async fn run(state: &AppState) {
     TasksExecutor::process_tasks(&state.db);
-    info!("Tasks executor start");
+
+    info!("Tasks executor started");
 }
