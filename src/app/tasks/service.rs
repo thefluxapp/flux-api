@@ -60,14 +60,13 @@ impl TasksService {
         let text = messages
             .iter()
             .map(|(message, user)| {
-                vec![
-                    match user {
-                        Some(user) => user.name(),
-                        _ => String::from("Nobody"),
-                    },
-                    message.text.clone(),
-                ]
-                .join(": ")
+                let name = match user {
+                    Some(user) => user.name(),
+                    _ => String::from("Person0"),
+                };
+
+                let name = vec!["#", name.as_str(), "#"].concat();
+                vec![name, message.text.clone()].join(": ")
             })
             .join("\n");
 
