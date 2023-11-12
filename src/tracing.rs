@@ -1,7 +1,7 @@
 use std::env;
 use tracing_subscriber::EnvFilter;
 
-pub fn run() {
+pub async fn run() {
     let is_production =
         env::var("APP_ENV").unwrap_or(String::from("development")) == String::from("production");
 

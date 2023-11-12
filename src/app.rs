@@ -37,6 +37,7 @@ pub async fn run() {
         // .nest("/session", session::router())
         .nest("/messages", messages::router())
         .nest("/streams", streams::router())
+        .nest("/users", users::router())
         .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
