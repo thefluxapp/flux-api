@@ -1,8 +1,9 @@
 FROM rust:1-alpine as build
 
 RUN apk update
-RUN apk add musl-dev openssl
-RUN apk add libressl-dev
+RUN apk upgrade
+RUN apk add musl-dev pkgconfig openssl-dev
+ENV OPENSSL_DIR=/usr
 
 WORKDIR /app
 COPY . .
