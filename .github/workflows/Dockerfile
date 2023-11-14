@@ -1,12 +1,14 @@
-FROM rust:1 as build
+FROM rust:1-alpine as build
+
+RUN apk update
+RUN apk add musl-dev openssl
+RUN apk add libressl-dev
 
 WORKDIR /app
 COPY . .
 RUN cargo build --release
 
-FROM debian:stable-slim
-RUN apt update
-RUN apt install -y openssl
+FROM alpine:latest
+RUN apk update
+RUN apk upgrade
 COPY --from=build /app/target/release/flux-api /app/
-
-# TODO: Move to Alpine
