@@ -11,11 +11,14 @@ use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
+use self::notifier::Notifier;
+
 mod db;
 
 mod auth;
 mod messages;
 // mod session;
+mod notifier;
 mod streams;
 mod summarizer;
 mod tasks;
@@ -37,6 +40,7 @@ pub async fn run() {
         // .nest("/session", session::router())
         .nest("/messages", messages::router())
         .nest("/streams", streams::router())
+        .nest("/users", users::router())
         .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
@@ -64,10 +68,11 @@ impl IntoResponse for AppError {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct AppState {
     pub db: Arc<DatabaseConnection>,
     pub webauthn: Arc<Webauthn>,
+    pub notifier: Arc<Notifier>,
 }
 
 impl AppState {
@@ -81,8 +86,13 @@ impl AppState {
             .rp_name("Flux");
 
         let webauthn = Arc::new(builder.build().unwrap());
+        let notifier = Arc::new(Notifier::new(env::var("NATS_ADDR").unwrap()).await);
 
-        AppState { db, webauthn }
+        AppState {
+            db,
+            webauthn,
+            notifier,
+        }
     }
 }
 

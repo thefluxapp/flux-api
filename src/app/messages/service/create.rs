@@ -11,7 +11,7 @@ impl MessagesService {
         user: &entities::user::Model,
         db: &DatabaseConnection,
         request_data: RequestData,
-    ) -> entities::message::Model {
+    ) -> (entities::message::Model, entities::stream::Model) {
         request_data.validate().unwrap();
 
         let stream = if let Some(message_id) = request_data.message_id {
@@ -39,9 +39,12 @@ impl MessagesService {
         };
 
         db.transaction::<_, _, DbErr>(|txn| {
-            Box::pin(
-                async move { Ok(MessagesRepo::create_with_stream(txn, message, stream).await) },
-            )
+            Box::pin(async move {
+                Ok((
+                    MessagesRepo::create_with_stream(txn, message, stream.clone()).await,
+                    stream,
+                ))
+            })
         })
         .await
         .unwrap()

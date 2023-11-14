@@ -7,7 +7,7 @@ mod tracing;
 async fn main() {
     dotenv().ok();
 
-    tracing::run();
+    tracing::run().await;
 
     app::run().await;
 }

@@ -40,6 +40,16 @@ services:
         aliases:
           - flux-pg.flux.local
 
+  nats:
+    image: nats:2
+    ports:
+      - 4222:4222
+      - 8222:8222
+    networks:
+      default:
+        aliases:
+          - flux-nats.flux.local
+
 volumes:
   cargo-home:
   rustup-home:

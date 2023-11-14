@@ -9,7 +9,6 @@ members = [".", "migration"]
 [dependencies]
 axum = { version = "^0.6", features = ["headers"] }
 dotenv = "0.15.0"
-fake = "2.6.1"
 jsonwebtoken = "8.3.0"
 sea-orm = { version = "^0.12", features = [
   "sqlx-postgres",
@@ -37,6 +36,7 @@ serde_json = "1.0.105"
 itertools = "0.11.0"
 reqwest = { version = "0.11.20", features = ["json"] }
 tokio-stream = "0.1.14"
+async-nats = "0.33.0"
 
 # [build]
 # rustflags = ["--cfg", "uuid_unstable"]
