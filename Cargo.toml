@@ -9,7 +9,6 @@ members = [".", "migration"]
 [dependencies]
 axum = { version = "^0.6", features = ["headers"] }
 dotenv = "0.15.0"
-fake = "2.6.1"
 jsonwebtoken = "8.3.0"
 sea-orm = { version = "^0.12", features = [
   "sqlx-postgres",

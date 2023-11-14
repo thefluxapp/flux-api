@@ -9,7 +9,7 @@ use self::controller::PushSubscriptionsController;
 
 mod controller;
 mod data;
-mod entities;
+pub mod entities;
 mod repo;
 mod service;
 
