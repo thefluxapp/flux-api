@@ -1,2 +1,2 @@
 [build]
-rustflags = ["--cfg", "uuid_unstable"]
+rustflags = ["--cfg", "uuid_unstable", "-Ctarget-feature=-crt-static"]
