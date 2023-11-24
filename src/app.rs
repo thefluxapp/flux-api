@@ -35,12 +35,16 @@ pub async fn run() {
     tasks::executor::run(&state).await;
 
     let app = Router::new()
-        .route("/healthz", get(|| async {}))
-        .nest("/auth", auth::router())
-        // .nest("/session", session::router())
-        .nest("/messages", messages::router())
-        .nest("/streams", streams::router())
-        .nest("/users", users::router())
+        .nest(
+            "/api",
+            Router::new()
+                .route("/healthz", get(|| async {}))
+                .nest("/auth", auth::router())
+                // .nest("/session", session::router())
+                .nest("/messages", messages::router())
+                .nest("/streams", streams::router())
+                .nest("/users", users::router()),
+        )
         .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
