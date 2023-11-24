@@ -19,6 +19,7 @@ pub struct ResponseStreamData {
 pub struct ResponseMessageData {
     id: Uuid,
     text: String,
+    status: String,
     stream: Option<ResponseMessageStreamData>,
     user: Option<ResponseMessageUserData>,
 }
@@ -80,6 +81,7 @@ impl
         ResponseMessageData {
             id: message.id,
             text: message.text,
+            status: "saved".to_string(),
             stream: match stream {
                 Some(stream) => Some(ResponseMessageStreamData {
                     id: stream.id,

@@ -1,6 +1,6 @@
 mod complete;
+mod index;
 mod join;
 mod login;
-mod me;
 
 pub struct AuthController;
