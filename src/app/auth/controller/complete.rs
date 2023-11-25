@@ -26,7 +26,7 @@ impl AuthController {
             request_data.last_name,
         )
         .await;
-        let token = AuthService::generate_token(user.id);
+        let token = AuthService::generate_token(user.id).await;
 
         Json((user, token).into())
     }
