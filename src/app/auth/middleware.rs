@@ -1,4 +1,4 @@
-use std::{env, error::Error};
+use std::error::Error;
 
 use axum::{
     async_trait,
@@ -26,7 +26,7 @@ where
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
-        let user = extract_user_from_jwt(parts, &app_state.db).await;
+        let user = extract_user_from_jwt(parts, &app_state.db, &app_state.auth_public_key).await;
 
         Ok(AppSession {
             user: match user {
@@ -40,6 +40,7 @@ where
 async fn extract_user_from_jwt(
     parts: &mut Parts,
     db: &DatabaseConnection,
+    auth_public_key: &Vec<u8>,
 ) -> Result<entities::user::Model, Box<dyn Error>> {
     let TypedHeader(Authorization(bearer)) = parts
         .extract::<TypedHeader<Authorization<Bearer>>>()
@@ -47,7 +48,7 @@ async fn extract_user_from_jwt(
 
     let jwt_user = decode::<JwtUser>(
         bearer.token(),
-        &DecodingKey::from_rsa_pem(&env::var("AUTH_PUBLIC_KEY").unwrap().into_bytes()).unwrap(),
+        &DecodingKey::from_rsa_pem(auth_public_key).unwrap(),
         &Validation::new(Algorithm::RS256),
     )?;
 
