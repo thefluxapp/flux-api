@@ -6,6 +6,7 @@ use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
+use tokio::fs;
 use tracing::info;
 use uuid::Uuid;
 use webauthn_rs::prelude::Url;
@@ -35,12 +36,16 @@ pub async fn run() {
     tasks::executor::run(&state).await;
 
     let app = Router::new()
-        .route("/healthz", get(|| async {}))
-        .nest("/auth", auth::router())
-        // .nest("/session", session::router())
-        .nest("/messages", messages::router())
-        .nest("/streams", streams::router())
-        .nest("/users", users::router())
+        .nest(
+            "/api",
+            Router::new()
+                .route("/healthz", get(|| async {}))
+                .nest("/auth", auth::router())
+                // .nest("/session", session::router())
+                .nest("/messages", messages::router())
+                .nest("/streams", streams::router())
+                .nest("/users", users::router()),
+        )
         .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
@@ -73,6 +78,7 @@ pub struct AppState {
     pub db: Arc<DatabaseConnection>,
     pub webauthn: Arc<Webauthn>,
     pub notifier: Arc<Notifier>,
+    pub auth_public_key: Arc<Vec<u8>>,
 }
 
 impl AppState {
@@ -88,10 +94,19 @@ impl AppState {
         let webauthn = Arc::new(builder.build().unwrap());
         let notifier = Arc::new(Notifier::new(env::var("NATS_ADDR").unwrap()).await);
 
+        let auth_public_key = env::var("AUTH_PUBLIC_KEY_FILE").unwrap();
+        let auth_public_key = Arc::new(
+            fs::read_to_string(auth_public_key)
+                .await
+                .unwrap()
+                .into_bytes(),
+        );
+
         AppState {
             db,
             webauthn,
             notifier,
+            auth_public_key,
         }
     }
 }

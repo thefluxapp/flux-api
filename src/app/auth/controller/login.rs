@@ -15,7 +15,7 @@ impl AuthController {
         Json(data): Json<RequestData>,
     ) -> Json<ResponseData> {
         let user = AuthService::login(&state.db, &state.webauthn, &data.id, &data.auth).await;
-        let token = AuthService::generate_token(user.id);
+        let token = AuthService::generate_token(user.id).await;
 
         Json((user, token).into())
     }
