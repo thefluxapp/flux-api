@@ -15,10 +15,14 @@ pub struct RequestData {
 #[derive(Serialize)]
 pub struct ResponseData {
     id: Uuid,
+    order: i64,
 }
 
 impl From<entities::message::Model> for ResponseData {
     fn from(message: entities::message::Model) -> Self {
-        ResponseData { id: message.id }
+        ResponseData {
+            id: message.id,
+            order: message.created_at.timestamp_micros(),
+        }
     }
 }

@@ -13,8 +13,8 @@ impl From<Option<entities::user::Model>> for ResponseData {
             user: match user {
                 Some(user) => Some(User {
                     id: user.id,
-                    first_name: user.first_name,
-                    last_name: user.last_name,
+                    name: user.name(),
+                    image: user.image(),
                 }),
                 _ => None,
             },
