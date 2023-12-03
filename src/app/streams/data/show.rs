@@ -19,8 +19,10 @@ pub struct ResponseStreamData {
 pub struct ResponseMessageData {
     id: Uuid,
     text: String,
+    status: String,
     stream: Option<ResponseMessageStreamData>,
     user: Option<ResponseMessageUserData>,
+    order: i64,
 }
 
 #[derive(Serialize)]
@@ -33,7 +35,7 @@ pub struct ResponseMessageStreamData {
 pub struct ResponseMessageUserData {
     pub id: Uuid,
     pub name: String,
-    pub label: String,
+    pub image: String,
 }
 
 impl
@@ -80,6 +82,7 @@ impl
         ResponseMessageData {
             id: message.id,
             text: message.text,
+            status: "saved".to_string(),
             stream: match stream {
                 Some(stream) => Some(ResponseMessageStreamData {
                     id: stream.id,
@@ -91,10 +94,11 @@ impl
                 Some(user) => Some(ResponseMessageUserData {
                     id: user.id,
                     name: user.name(),
-                    label: user.name().chars().take(1).last().unwrap().to_string(),
+                    image: user.image(),
                 }),
                 _ => None,
             },
+            order: message.created_at.timestamp_micros(),
         }
     }
 }

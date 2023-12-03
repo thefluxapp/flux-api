@@ -33,9 +33,11 @@ impl From<Vec<(entities::stream::Model, Option<entities::user::Model>)>> for Res
 
 impl From<(entities::stream::Model, Option<entities::user::Model>)> for ResponseStreamData {
     fn from((stream, user): (entities::stream::Model, Option<entities::user::Model>)) -> Self {
+        let label = &stream.id.to_string()[stream.id.to_string().len() - 2..].to_uppercase();
+
         ResponseStreamData {
             id: stream.id,
-            label: "#".to_string(),
+            label: label.to_owned(),
             title: match stream.title {
                 Some(title) => title,
                 _ => match &user {

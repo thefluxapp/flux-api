@@ -1,12 +1,10 @@
-use std::error::Error;
-
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts},
     headers::{authorization::Bearer, Authorization},
     http::request::Parts,
     response::Response,
-    RequestPartsExt, TypedHeader,
+    BoxError, RequestPartsExt, TypedHeader,
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -41,7 +39,7 @@ async fn extract_user_from_jwt(
     parts: &mut Parts,
     db: &DatabaseConnection,
     auth_public_key: &Vec<u8>,
-) -> Result<entities::user::Model, Box<dyn Error>> {
+) -> Result<entities::user::Model, BoxError> {
     let TypedHeader(Authorization(bearer)) = parts
         .extract::<TypedHeader<Authorization<Bearer>>>()
         .await?;
@@ -54,8 +52,9 @@ async fn extract_user_from_jwt(
 
     let user = entities::user::Entity::find_by_id(jwt_user.claims.sub)
         .one(db)
-        .await?
-        .expect("NO_USER_FOR_JWT_SUB");
+        .await
+        .unwrap()
+        .unwrap();
 
     Ok(user)
 }

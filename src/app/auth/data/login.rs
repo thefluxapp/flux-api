@@ -20,8 +20,8 @@ impl From<(entities::user::Model, String)> for ResponseData {
         ResponseData {
             user: User {
                 id: user.id,
-                first_name: user.first_name,
-                last_name: user.last_name,
+                name: user.name(),
+                image: user.image(),
             },
             token,
         }

@@ -19,5 +19,5 @@ pub fn router() -> Router<AppState> {
         .route("/login", post(AuthController::login))
         .route("/join", post(AuthController::join))
         .route("/complete", post(AuthController::complete))
-        .route("/me", get(AuthController::me))
+        .route("/", get(AuthController::index))
 }

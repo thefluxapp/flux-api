@@ -23,6 +23,12 @@ impl Model {
             _ => self.email.clone(),
         }
     }
+
+    pub fn image(&self) -> String {
+        let mut image: String = "https://i.pravatar.cc/150?u=".to_owned();
+        image.push_str(self.id.to_string().as_str());
+        image
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
