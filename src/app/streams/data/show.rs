@@ -1,8 +1,16 @@
 use itertools::izip;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 use super::super::entities;
+
+#[derive(Deserialize, Validate)]
+pub struct RequestData {
+    #[validate(range(min = 5, max = 20))]
+    pub limit: Option<u8>,
+    pub before: Option<Uuid>,
+}
 
 #[derive(Serialize)]
 pub struct ResponseData {

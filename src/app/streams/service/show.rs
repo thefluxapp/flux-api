@@ -1,14 +1,18 @@
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, LoaderTrait, QueryFilter};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, LoaderTrait, QueryFilter, QueryTrait};
 use uuid::Uuid;
 
 use crate::app::AppError;
 
-use super::{super::entities, StreamsService};
+use super::{
+    super::{data::show::RequestData, entities},
+    StreamsService,
+};
 
 impl StreamsService {
     pub async fn show(
         db: &DatabaseConnection,
         stream_id: Uuid,
+        request_data: RequestData,
     ) -> Result<
         (
             entities::stream::Model,
@@ -28,7 +32,7 @@ impl StreamsService {
         };
 
         let (messages, users, streams) =
-            Self::find_messages_with_streams_by_stream(db, stream.id).await;
+            Self::find_messages_with_streams_by_stream(db, stream.id, request_data).await;
 
         Ok((stream, messages, users, streams))
     }
@@ -36,6 +40,7 @@ impl StreamsService {
     async fn find_messages_with_streams_by_stream(
         db: &DatabaseConnection,
         stream_id: Uuid,
+        request_data: RequestData,
     ) -> (
         Vec<entities::message::Model>,
         Vec<Option<entities::user::Model>>,
@@ -44,6 +49,11 @@ impl StreamsService {
         let messages = entities::message::Entity::find()
             .inner_join(entities::message_stream::Entity)
             .filter(entities::message_stream::Column::StreamId.eq(stream_id))
+            .apply_if(request_data.before, |query, v| {
+                query.filter(entities::message::Column::Id.lt(v))
+            })
+            .cursor_by(entities::message::Column::Id)
+            .last(request_data.limit.unwrap_or(10).into())
             .all(db)
             .await
             .unwrap();
