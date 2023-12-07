@@ -6,8 +6,6 @@ use sea_orm::{
     QuerySelect, Set, TransactionTrait,
 };
 
-// use crate::app::summarizer::Summarizer;
-
 use crate::app::messages::repo::MessagesRepo;
 use crate::app::summarizer::Summarizer;
 
@@ -54,8 +52,6 @@ impl TasksService {
     }
 
     async fn process_stream_task(&self, stream_task: entities::stream_task::Model) {
-        // let text = String::from("");
-
         let messages = MessagesRepo::get_by_stream(&self.db, stream_task.stream_id).await;
         let text = messages
             .iter()
@@ -65,13 +61,13 @@ impl TasksService {
                     _ => String::from("Person0"),
                 };
 
-                let name = vec!["#", name.as_str(), "#"].concat();
+                // let name = vec!["#", name.as_str(), "#"].concat();
                 vec![name, message.text.clone()].join(": ")
             })
             .join("\n");
 
-        match self.summarizer.call(text).await {
-            Ok(res) => {
+        match self.summarizer.ya_gpt_completion(text).await {
+            Ok(text) => {
                 let txn = self.db.begin().await.unwrap();
 
                 let mut stream: entities::stream::ActiveModel =
@@ -82,23 +78,19 @@ impl TasksService {
                         .unwrap()
                         .into();
 
-                stream.text = Set(Some(res.text));
+                stream.text = Set(Some(text));
                 stream.update(&txn).await.unwrap();
 
                 let stream_task: entities::stream_task::ActiveModel = stream_task.into();
                 stream_task.delete(&txn).await.unwrap();
 
                 txn.commit().await.unwrap();
-
-                println!("GETTING SUCCESS FROM AI");
             }
             _ => {
                 let mut stream_task: entities::stream_task::ActiveModel = stream_task.into();
                 stream_task.started_at = Set(None);
                 stream_task.failed_at = Set(Some(Utc::now().naive_utc()));
                 stream_task.update(&self.db).await.unwrap();
-
-                println!("REQUEST FAILED");
             }
         };
     }
