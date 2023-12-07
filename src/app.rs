@@ -49,12 +49,10 @@ pub async fn run() {
         .with_state(state);
 
     let addr = SocketAddr::from_str(&env::var("APP_ADDR").unwrap()).unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     info!("App start on {}", &addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
 
 pub enum AppError {
