@@ -1,10 +1,13 @@
 use axum::{
     async_trait,
     extract::{FromRef, FromRequestParts},
-    headers::{authorization::Bearer, Authorization},
     http::request::Parts,
     response::Response,
-    BoxError, RequestPartsExt, TypedHeader,
+    BoxError, RequestPartsExt,
+};
+use axum_extra::{
+    headers::{authorization::Bearer, Authorization},
+    TypedHeader,
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use sea_orm::{DatabaseConnection, EntityTrait};
