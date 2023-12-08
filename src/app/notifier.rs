@@ -64,6 +64,11 @@ impl Notifier {
             .unwrap();
 
         for push_subscription in push_subscriptions {
+            info!(
+                "Send push: user_id={}, stream_id={}, message_id={}",
+                push_subscription.user_id, stream.id, message.id
+            );
+
             self.send(
                 stream.title.clone().unwrap_or("XXX".to_string()),
                 message.text.clone(),

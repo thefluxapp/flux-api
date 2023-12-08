@@ -5,7 +5,6 @@ use reqwest::{header::AUTHORIZATION, Client};
 use serde::Deserialize;
 
 mod ya_gpt;
-
 pub struct Summarizer {
     client: Client,
     ya_gpt: YaGPT,

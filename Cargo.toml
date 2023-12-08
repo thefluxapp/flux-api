@@ -26,7 +26,6 @@ uuid = { version = "1.6.1", features = ["v4", "v7"] }
 
 migration = { path = "./migration" }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["json"] }
 chrono = "0.4.31"
 webauthn-rs = { version = "0.4.8", features = [
   "danger-allow-state-serialisation",
@@ -38,6 +37,19 @@ reqwest = { version = "0.11.22", features = ["json"] }
 tokio-stream = "0.1.14"
 async-nats = "0.33.0"
 axum-extra = { version = "0.9.0", features = ["typed-header"] }
+tracing-opentelemetry = "0.22.0"
+opentelemetry = { version = "0.21.0", features = ["logs", "metrics", "trace"] }
+opentelemetry_sdk = { version = "0.21.1", features = [
+  "rt-tokio",
+  "logs_level_enabled",
+] }
+opentelemetry-otlp = { version = "0.14.0", features = [
+  "logs",
+  "metrics",
+  "trace",
+] }
+tracing-subscriber = "0.3.18"
+opentelemetry-appender-tracing = "0.2.0"
 
 # [build]
 # rustflags = ["--cfg", "uuid_unstable"]
