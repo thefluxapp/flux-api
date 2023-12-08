@@ -1,5 +1,6 @@
 use opentelemetry::KeyValue;
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
+use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::Resource;
 use std::env;
 use tracing_subscriber::Layer;
@@ -25,14 +26,18 @@ pub async fn run() {
                 .logging()
                 .with_log_config(
                     opentelemetry_sdk::logs::config().with_resource(Resource::new(vec![
-                        KeyValue::new("service.name", "flux-api"),
+                        KeyValue::new("service.name", env::var("APP_NAME").unwrap()),
                         KeyValue::new(
                             "deployment.environment",
                             env::var("APP_ENV").unwrap_or("local".to_string()),
                         ),
                     ])),
                 )
-                .with_exporter(opentelemetry_otlp::new_exporter().tonic())
+                .with_exporter(
+                    opentelemetry_otlp::new_exporter()
+                        .tonic()
+                        .with_endpoint(env::var("APP_EXPORTER_ENDPOINT").unwrap()),
+                )
                 .install_batch(opentelemetry_sdk::runtime::Tokio)
                 .unwrap();
 
