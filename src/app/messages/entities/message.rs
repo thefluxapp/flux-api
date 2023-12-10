@@ -12,6 +12,16 @@ pub struct Model {
     pub created_at: DateTime,
 }
 
+impl Model {
+    pub fn status(&self) -> String {
+        String::from("active")
+    }
+
+    pub fn order(&self) -> i64 {
+        self.created_at.timestamp_micros()
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(

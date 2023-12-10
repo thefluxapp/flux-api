@@ -11,6 +11,7 @@ pub struct ResponseData {
 #[derive(Serialize)]
 pub struct ResponseStreamData {
     pub id: Uuid,
+    pub message_id: Uuid,
     pub text: Option<String>,
     pub title: String,
     pub label: String,
@@ -37,13 +38,11 @@ impl From<(entities::stream::Model, Option<entities::user::Model>)> for Response
 
         ResponseStreamData {
             id: stream.id,
+            message_id: stream.message_id,
             label: label.to_owned(),
             title: match stream.title {
                 Some(title) => title,
-                _ => match &user {
-                    Some(user) => "Stream: ".to_string() + &user.name(),
-                    _ => "VOID STREAM".to_string(),
-                },
+                None => "Untitled".to_string(),
             },
             text: stream.text,
             user: match user {

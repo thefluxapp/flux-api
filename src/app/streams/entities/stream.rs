@@ -10,7 +10,8 @@ pub struct Model {
     pub title: Option<String>,
     pub text: Option<String>,
     pub user_id: Option<Uuid>,
-    pub message_id: Option<Uuid>,
+    pub message_id: Uuid,
+    pub is_main: bool,
     pub created_at: DateTime,
 }
 
@@ -41,6 +42,12 @@ impl Related<super::message::Entity> for Entity {
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::message_stream::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::MessageStream.def()
     }
 }
 

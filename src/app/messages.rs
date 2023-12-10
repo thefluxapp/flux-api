@@ -1,4 +1,7 @@
-use axum::{routing::post, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 
 use self::controller::MessagesController;
 
@@ -10,15 +13,9 @@ pub mod entities;
 pub mod repo;
 mod service;
 
-// use axum::{
-//     routing::{get, post},
-//     Router,
-// };
-
-// use self::controller::MessagesController;
-
 pub fn router() -> Router<AppState> {
     Router::new()
-        // .route("/", get(MessagesController::index))
         .route("/", post(MessagesController::create))
+        .route("/:message_id", get(MessagesController::show))
+        .route("/:message_id/messages", get(MessagesController::messages))
 }
