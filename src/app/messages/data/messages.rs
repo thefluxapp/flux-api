@@ -7,20 +7,14 @@ use super::super::entities;
 
 #[derive(Deserialize, Validate)]
 pub struct RequestData {
-    #[validate(range(min = 5, max = 20))]
+    #[validate(range(min = 2, max = 20))]
     pub limit: Option<u8>,
     pub before: Option<Uuid>,
 }
 
 #[derive(Serialize)]
 pub struct ResponseData {
-    stream: ResponseStreamData,
     messages: Vec<ResponseMessageData>,
-}
-
-#[derive(Serialize)]
-pub struct ResponseStreamData {
-    pub id: Uuid,
 }
 
 #[derive(Serialize)]
@@ -48,22 +42,19 @@ pub struct ResponseMessageUserData {
 
 impl
     From<(
-        entities::stream::Model,
         Vec<entities::message::Model>,
         Vec<Option<entities::user::Model>>,
         Vec<Option<entities::stream::Model>>,
     )> for ResponseData
 {
     fn from(
-        (stream, messages, users, streams): (
-            entities::stream::Model,
+        (messages, users, streams): (
             Vec<entities::message::Model>,
             Vec<Option<entities::user::Model>>,
             Vec<Option<entities::stream::Model>>,
         ),
     ) -> Self {
         ResponseData {
-            stream: stream.into(),
             messages: izip!(messages, users, streams)
                 .into_iter()
                 .map(|x| x.into())
@@ -72,7 +63,6 @@ impl
     }
 }
 
-// TODO: Try to refactor this
 impl
     From<(
         entities::message::Model,
@@ -89,8 +79,8 @@ impl
     ) -> Self {
         ResponseMessageData {
             id: message.id,
-            text: message.text,
-            status: "saved".to_string(),
+            text: message.text.clone(),
+            status: message.status().clone(),
             stream: match stream {
                 Some(stream) => Some(ResponseMessageStreamData {
                     id: stream.id,
@@ -106,13 +96,7 @@ impl
                 }),
                 _ => None,
             },
-            order: message.created_at.timestamp_micros(),
+            order: message.order(),
         }
-    }
-}
-
-impl From<entities::stream::Model> for ResponseStreamData {
-    fn from(stream: entities::stream::Model) -> Self {
-        ResponseStreamData { id: stream.id }
     }
 }

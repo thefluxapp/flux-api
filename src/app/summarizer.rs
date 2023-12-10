@@ -14,7 +14,7 @@ impl Summarizer {
     pub fn new() -> Self {
         Self {
             client: reqwest::Client::builder()
-                .timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(20))
                 .build()
                 .unwrap(),
             ya_gpt: YaGPT::new(),

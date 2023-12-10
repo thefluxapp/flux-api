@@ -1,7 +1,7 @@
-use sea_orm::{DatabaseConnection, DbErr, EntityTrait, Set, TransactionTrait};
+use sea_orm::{DatabaseConnection, TransactionTrait};
 use validator::Validate;
 
-use crate::app::streams::service::StreamsService;
+use crate::app::streams::repo::StreamsRepo;
 
 use super::super::{data::create::RequestData, entities, repo::MessagesRepo};
 use super::MessagesService;
@@ -14,39 +14,28 @@ impl MessagesService {
     ) -> (entities::message::Model, entities::stream::Model) {
         request_data.validate().unwrap();
 
-        let stream = if let Some(message_id) = request_data.message_id {
-            let message = entities::message::Entity::find_by_id(message_id)
-                .one(db)
-                .await
-                .unwrap()
-                .unwrap();
+        let txn = db.begin().await.unwrap();
 
-            StreamsService::find_or_create_by_message(message, db).await
-        } else if let Some(stream_id) = request_data.stream_id {
-            entities::stream::Entity::find_by_id(stream_id)
-                .one(db)
-                .await
-                .unwrap()
-                .unwrap()
-        } else {
-            StreamsService::find_or_create_by_user(user, db).await
+        let message = MessagesRepo::create_message(&txn, request_data.text, user.id).await;
+
+        let stream = match request_data.message_id {
+            Some(message_id) => match StreamsRepo::find_by_message_id(&txn, message_id).await {
+                Some(stream) => stream,
+                None => {
+                    let stream = StreamsRepo::create(&txn, message_id, false, None).await;
+                    MessagesRepo::create_message_stream(&txn, message_id, stream.id).await;
+
+                    stream
+                }
+            },
+            None => StreamsRepo::create(&txn, message.id, true, request_data.title).await,
         };
 
-        let message = entities::message::ActiveModel {
-            text: Set(request_data.text),
-            user_id: Set(user.id),
-            ..Default::default()
-        };
+        MessagesRepo::create_message_stream(&txn, message.id, stream.id).await;
+        StreamsRepo::create_stream_task(&txn, stream.id).await;
 
-        db.transaction::<_, _, DbErr>(|txn| {
-            Box::pin(async move {
-                Ok((
-                    MessagesRepo::create_with_stream(txn, message, stream.clone()).await,
-                    stream,
-                ))
-            })
-        })
-        .await
-        .unwrap()
+        txn.commit().await.unwrap();
+
+        (message, stream)
     }
 }

@@ -6,6 +6,6 @@ impl StreamsService {
     pub async fn index(
         db: &DatabaseConnection,
     ) -> Vec<(entities::stream::Model, Option<entities::user::Model>)> {
-        StreamsRepo::find_all_user_streams(db).await
+        StreamsRepo::find_streams(db, true).await
     }
 }

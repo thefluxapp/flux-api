@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Streams::Table)
-                    .add_column(ColumnDef::new(Streams::MessageId).uuid())
+                    .add_column(ColumnDef::new(Streams::MessageId).uuid().not_null())
                     .add_foreign_key(
                         &TableForeignKey::new()
                             .name("fk_streams_message_id")

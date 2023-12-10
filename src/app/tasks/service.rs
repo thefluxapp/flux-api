@@ -5,6 +5,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter,
     QuerySelect, Set, TransactionTrait,
 };
+use tracing::error;
 
 use crate::app::messages::repo::MessagesRepo;
 use crate::app::summarizer::Summarizer;
@@ -86,7 +87,8 @@ impl TasksService {
 
                 txn.commit().await.unwrap();
             }
-            _ => {
+            Err(error) => {
+                error!(error);
                 let mut stream_task: entities::stream_task::ActiveModel = stream_task.into();
                 stream_task.started_at = Set(None);
                 stream_task.failed_at = Set(Some(Utc::now().naive_utc()));

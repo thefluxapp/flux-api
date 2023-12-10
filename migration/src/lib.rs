@@ -8,6 +8,7 @@ mod m20221023_090254_add_message_to_streams;
 mod m20230409_073642_create_stream_tasks;
 mod m20230820_174857_create_auth_states;
 mod m20231112_141751_create_user_push_subscriptions;
+mod m20231209_150708_add_is_main_to_streams;
 
 pub struct Migrator;
 
@@ -23,6 +24,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20230409_073642_create_stream_tasks::Migration),
             Box::new(m20230820_174857_create_auth_states::Migration),
             Box::new(m20231112_141751_create_user_push_subscriptions::Migration),
+            Box::new(m20231209_150708_add_is_main_to_streams::Migration),
         ]
     }
 }

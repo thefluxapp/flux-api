@@ -14,7 +14,5 @@ pub mod service;
 // pub mod services;
 
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/", get(StreamsController::index))
-        .route("/:stream_id", get(StreamsController::show))
+    Router::new().route("/", get(StreamsController::index))
 }
