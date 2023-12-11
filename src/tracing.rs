@@ -47,7 +47,11 @@ pub async fn run() {
             let tracer = tracing_opentelemetry::layer().with_tracer(
                 opentelemetry_otlp::new_pipeline()
                     .tracing()
-                    .with_exporter(opentelemetry_otlp::new_exporter().tonic())
+                    .with_exporter(
+                        opentelemetry_otlp::new_exporter()
+                            .tonic()
+                            .with_endpoint(env::var("APP_EXPORTER_ENDPOINT").unwrap()),
+                    )
                     .install_batch(opentelemetry_sdk::runtime::Tokio)
                     .unwrap(),
             );
