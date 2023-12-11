@@ -11,6 +11,7 @@ use axum_extra::{
 };
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use sea_orm::{DatabaseConnection, EntityTrait};
+use tracing::error;
 
 use crate::app::{AppSession, JwtUser};
 
@@ -53,11 +54,17 @@ async fn extract_user_from_jwt(
         &Validation::new(Algorithm::RS256),
     )?;
 
-    let user = entities::user::Entity::find_by_id(jwt_user.claims.sub)
+    match entities::user::Entity::find_by_id(jwt_user.claims.sub)
         .one(db)
         .await
         .unwrap()
-        .unwrap();
+    {
+        Some(user) => Ok(user),
+        None => {
+            // TODO: Rewrite this
+            error!("SUB_NOT_FOUND: {}", jwt_user.claims.sub);
 
-    Ok(user)
+            Err("SUB_NOT_FOUND".into())
+        }
+    }
 }
