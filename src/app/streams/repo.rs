@@ -1,7 +1,9 @@
-use chrono::Utc;
-use migration::OnConflict;
-use sea_orm::QueryOrder;
-use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set};
+use chrono::{Duration, Utc};
+use migration::{Expr, OnConflict};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter, Set,
+};
+use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 use super::entities;
@@ -85,6 +87,42 @@ impl StreamsRepo {
             .filter(entities::stream::Column::IsMain.eq(is_main))
             .order_by_desc(entities::stream::Column::Id)
             .all(db)
+            .await
+            .unwrap()
+    }
+
+    pub async fn find_and_lock_stream_tasks_batch<T: ConnectionTrait>(
+        db: &T,
+    ) -> Vec<entities::stream_task::Model> {
+        entities::stream_task::Entity::update_many()
+            .col_expr(
+                entities::stream_task::Column::StartedAt,
+                Expr::value(Utc::now().naive_utc()),
+            )
+            .filter(
+                entities::stream_task::Column::Id.in_subquery(
+                    sea_orm::QueryFilter::query(
+                        &mut entities::stream_task::Entity::find()
+                            .select_only()
+                            .column(entities::stream_task::Column::Id)
+                            .filter(
+                                Condition::all()
+                                    .add(entities::stream_task::Column::StartedAt.is_null())
+                                    .add(
+                                        Condition::any()
+                                            .add(entities::stream_task::Column::FailedAt.is_null())
+                                            .add(
+                                                entities::stream_task::Column::FailedAt
+                                                    .lt(Utc::now() - Duration::seconds(10)),
+                                            ),
+                                    ),
+                            )
+                            .limit(2),
+                    )
+                    .to_owned(),
+                ),
+            )
+            .exec_with_returning(db)
             .await
             .unwrap()
     }

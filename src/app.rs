@@ -13,10 +13,11 @@ use webauthn_rs::prelude::Url;
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 use self::notifier::Notifier;
-
-mod db;
+use self::summarizer::ya_gpt::YaGPT;
+// use self::summarizer::YaGPT;
 
 mod auth;
+mod db;
 mod messages;
 // mod session;
 mod notifier;
@@ -33,7 +34,7 @@ pub async fn run() {
     info!("Migrator finished");
 
     // Start tasks processor
-    tasks::executor::run(&state).await;
+    tasks::executor::run(&state);
 
     let app = Router::new()
         .nest(
@@ -77,6 +78,7 @@ pub struct AppState {
     pub webauthn: Arc<Webauthn>,
     pub notifier: Arc<Notifier>,
     pub auth_public_key: Arc<Vec<u8>>,
+    pub ya_gpt: Arc<YaGPT>,
 }
 
 impl AppState {
@@ -100,11 +102,14 @@ impl AppState {
                 .into_bytes(),
         );
 
+        let ya_gpt = Arc::new(YaGPT::new());
+
         AppState {
             db,
             webauthn,
             notifier,
             auth_public_key,
+            ya_gpt,
         }
     }
 }

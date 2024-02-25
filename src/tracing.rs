@@ -11,7 +11,7 @@ enum Tracing {
     Stdout,
 }
 
-pub async fn run() {
+pub fn run() {
     let tracing = match env::var("APP_TRACING") {
         Ok(val) => match val.as_str() {
             "otel" => Tracing::Otel,

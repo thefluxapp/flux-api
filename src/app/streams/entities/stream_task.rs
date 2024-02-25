@@ -11,6 +11,7 @@ pub struct Model {
     pub processed_at: Option<DateTime>,
     pub started_at: Option<DateTime>,
     pub started_by: Option<Uuid>,
+    pub ya_gpt_id: Option<String>,
     pub failed_at: Option<DateTime>,
 }
 

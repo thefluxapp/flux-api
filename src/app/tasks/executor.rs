@@ -1,38 +1,33 @@
 use sea_orm::DatabaseConnection;
+use std::env;
 use std::time::Duration;
 use tokio::time::{self, MissedTickBehavior};
 use tokio_stream::wrappers::IntervalStream;
 use tokio_stream::StreamExt;
-use tracing::info;
 
-use crate::app::{summarizer::Summarizer, AppState};
+use crate::app::summarizer::ya_gpt::YaGPT;
 
-use super::service::TasksService;
+use super::{super::AppState, service};
 
-pub struct TasksExecutor {}
+pub fn run(state: &AppState) {
+    let db = state.db.clone();
+    let ya_gpt = state.ya_gpt.clone();
+    let period: u64 = env::var("STREAM_TASKS_PROCESSOR_PEROID_MS")
+        .unwrap()
+        .parse()
+        .unwrap();
 
-impl TasksExecutor {
-    pub fn process_tasks(db: &DatabaseConnection) {
-        let tasks_service = TasksService {
-            db: db.clone(),
-            summarizer: Summarizer::new(),
-        };
-
-        let mut inteval = time::interval(Duration::from_millis(1000));
-        inteval.set_missed_tick_behavior(MissedTickBehavior::Delay);
-
-        let mut stream = IntervalStream::new(inteval);
-
-        tokio::spawn(async move {
-            while let Some(_ts) = stream.next().await {
-                tasks_service.process_stream_tasks().await;
-            }
-        });
-    }
+    tokio::spawn(async move {
+        process_stream_tasks(&db, &ya_gpt, period).await;
+    });
 }
 
-pub async fn run(state: &AppState) {
-    TasksExecutor::process_tasks(&state.db);
+async fn process_stream_tasks(db: &DatabaseConnection, ya_gpt: &YaGPT, period: u64) {
+    let mut interval = time::interval(Duration::from_millis(period));
+    interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
+    let mut stream = IntervalStream::new(interval);
 
-    info!("Tasks executor started");
+    while let Some(_ts) = stream.next().await {
+        service::process_stream_tasks(db, ya_gpt).await;
+    }
 }
