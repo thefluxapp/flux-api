@@ -1,12 +1,12 @@
 use sea_orm::{DatabaseConnection, Set};
 
-use super::PushSubscriptionsService;
-
 use super::super::{data::create::RequestData, entities, repo::PushSubscriptionsRepo};
+use super::PushSubscriptionsService;
+use crate::app::auth::User;
 
 impl PushSubscriptionsService {
     pub async fn create(
-        user: &entities::user::Model,
+        user: &User,
         db: &DatabaseConnection,
         request_data: RequestData,
     ) -> entities::push_subscription::Model {

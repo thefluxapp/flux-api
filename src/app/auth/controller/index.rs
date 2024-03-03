@@ -1,11 +1,11 @@
 use axum::Json;
 
-use crate::app::AppSession;
+use crate::app::auth::User;
 
 use super::{super::data::index::ResponseData, AuthController};
 
 impl AuthController {
-    pub async fn index(session: AppSession) -> Json<ResponseData> {
-        Json(session.user.into())
+    pub async fn index(user: Option<User>) -> Json<ResponseData> {
+        Json(user.into())
     }
 }

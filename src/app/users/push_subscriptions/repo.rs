@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait};
+use sea_orm::{ActiveModelTrait, ConnectionTrait};
 
 use super::entities;
 
@@ -12,10 +12,10 @@ impl PushSubscriptionsRepo {
         push_subscription.insert(db).await.unwrap()
     }
 
-    pub async fn find_all<T: ConnectionTrait>(db: &T) -> Vec<entities::push_subscription::Model> {
-        entities::push_subscription::Entity::find()
-            .all(db)
-            .await
-            .unwrap()
-    }
+    // pub async fn find_all<T: ConnectionTrait>(db: &T) -> Vec<entities::push_subscription::Model> {
+    //     entities::push_subscription::Entity::find()
+    //         .all(db)
+    //         .await
+    //         .unwrap()
+    // }
 }

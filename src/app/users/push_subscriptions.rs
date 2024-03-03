@@ -17,5 +17,5 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", post(PushSubscriptionsController::create))
         .route("/vapid", get(PushSubscriptionsController::vapid))
-        .route("/test", get(PushSubscriptionsController::test))
+    // .route("/test", get(PushSubscriptionsController::test))
 }

@@ -24,13 +24,13 @@ services:
       - rustup-home:/usr/local/rustup
 
   pg:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: flux
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./.local/volumes/pg/data:/var/lib/postgresql/data
+      - pg-data:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -U postgres -d flux
     ports:
@@ -65,6 +65,8 @@ services:
 volumes:
   cargo-home:
   rustup-home:
+  pg-data:
+
 
 networks:
   default:

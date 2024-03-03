@@ -15,7 +15,7 @@ mod service;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/", post(MessagesController::create))
+        .route("/", post(controller::create_message))
         .route("/:message_id", get(MessagesController::show))
         .route("/:message_id/messages", get(MessagesController::messages))
 }

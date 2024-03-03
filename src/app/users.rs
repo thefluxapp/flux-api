@@ -7,5 +7,5 @@ pub mod push_subscriptions;
 pub mod repo;
 
 pub fn router() -> Router<AppState> {
-    Router::new().nest("/push_subscriptions", push_subscriptions::router())
+    Router::new().nest("/push-subscriptions", push_subscriptions::router())
 }

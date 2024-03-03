@@ -18,16 +18,11 @@ pub struct Model {
 
 impl Model {
     pub fn name(&self) -> String {
-        match &self.first_name {
-            Some(first_name) => first_name.clone(),
-            _ => self.email.clone(),
-        }
+        self.first_name.as_ref().unwrap_or(&self.email).clone()
     }
 
-    pub fn image(&self) -> String {
-        let mut image: String = "https://i.pravatar.cc/150?u=".to_owned();
-        image.push_str(self.id.to_string().as_str());
-        image
+    pub fn image(&self) -> Option<String> {
+        None
     }
 }
 

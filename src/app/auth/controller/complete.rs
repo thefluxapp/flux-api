@@ -28,6 +28,6 @@ impl AuthController {
         .await;
         let token = AuthService::generate_token(user.id).await;
 
-        Json((user, token).into())
+        Json((user.into(), token).into())
     }
 }
