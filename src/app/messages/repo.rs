@@ -127,17 +127,25 @@ pub async fn find_steam_by_message_id<T: ConnectionTrait>(
 pub async fn create_stream_task<T: ConnectionTrait>(
     db: &T,
     model: entities::stream_task::Model,
-) -> Result<entities::stream_task::Model, DbErr> {
-    let stream_task = model.into_active_model().insert(db).await?;
+) -> Result<(), DbErr> {
+    entities::stream_task::Entity::insert(model.into_active_model())
+        .on_conflict(OnConflict::new().do_nothing().to_owned())
+        .do_nothing()
+        .exec(db)
+        .await?;
 
-    Ok(stream_task)
+    Ok(())
 }
 
 pub async fn create_stream_user<T: ConnectionTrait>(
     db: &T,
     model: entities::stream_user::Model,
-) -> Result<entities::stream_user::Model, DbErr> {
-    let stream_user = model.into_active_model().insert(db).await?;
+) -> Result<(), DbErr> {
+    entities::stream_user::Entity::insert(model.into_active_model())
+        .on_conflict(OnConflict::new().do_nothing().to_owned())
+        .do_nothing()
+        .exec(db)
+        .await?;
 
-    Ok(stream_user)
+    Ok(())
 }

@@ -13,6 +13,7 @@ mod m20231210_170001_add_ya_gpt_id_to_stream_tasks;
 mod m20240229_121744_create_streams_users;
 mod m20240229_143819_create_uniq_index_to_messages_streams;
 mod m20240302_161914_create_uniq_index_to_streams;
+mod m20240303_142403_add_user_id_idx_to_pushes;
 
 pub struct Migrator;
 
@@ -33,6 +34,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20240229_121744_create_streams_users::Migration),
             Box::new(m20240229_143819_create_uniq_index_to_messages_streams::Migration),
             Box::new(m20240302_161914_create_uniq_index_to_streams::Migration),
+            Box::new(m20240303_142403_add_user_id_idx_to_pushes::Migration),
         ]
     }
 }

@@ -65,7 +65,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum StreamsUsers {
+pub enum StreamsUsers {
     Table,
     Id,
     StreamId,

@@ -30,7 +30,7 @@ async fn create_message_for_stream(
     user: User,
     message_id: Uuid,
 ) -> Result<(entities::message::Model, entities::stream::Model), AppError> {
-    let stream = match repo::find_steam_by_message_id(db, Uuid::now_v7()).await? {
+    let stream = match repo::find_steam_by_message_id(db, message_id).await? {
         Some(stream) => stream,
         None => {
             repo::create_stream_and_select_again(
