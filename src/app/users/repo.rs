@@ -64,3 +64,10 @@ impl UsersRepo {
         user.update(db).await.unwrap();
     }
 }
+
+pub async fn find_by_id<T: ConnectionTrait>(db: &T, id: Uuid) -> Option<entities::user::Model> {
+    entities::user::Entity::find_by_id(id)
+        .one(db)
+        .await
+        .unwrap()
+}

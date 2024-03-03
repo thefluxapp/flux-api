@@ -1,6 +1,6 @@
 use axum::{extract::State, Json};
 
-use crate::app::{AppError, AppSession, AppState};
+use crate::app::{auth::User, AppError, AppState};
 
 use super::{
     super::{
@@ -12,22 +12,14 @@ use super::{
 
 impl PushSubscriptionsController {
     pub async fn create(
-        session: AppSession,
+        user: User,
         State(state): State<AppState>,
         Json(request_data): Json<RequestData>,
     ) -> Result<Json<ResponseData>, AppError> {
-        println!("{:?}", request_data);
-
-        match session.user {
-            Some(user) => Ok(Json(
-                service::PushSubscriptionsService::create(&user, &state.db, request_data)
-                    .await
-                    .into(),
-            )),
-            None => Err(AppError::Forbidden),
-        }
-        // Json(ResponseData {
-        //     id: "QQQ".to_string(),
-        // })
+        Ok(Json(
+            service::PushSubscriptionsService::create(&user, &state.db, request_data)
+                .await
+                .into(),
+        ))
     }
 }

@@ -15,6 +15,7 @@ sea-orm = { version = "0.12.8", features = [
   "sqlx-sqlite",
   "runtime-tokio-native-tls",
   "macros",
+  "mock",
   "with-uuid",
   "with-time",
   "with-json",
@@ -50,6 +51,8 @@ opentelemetry-otlp = { version = "0.14.0", features = [
 ] }
 tracing-subscriber = "0.3.18"
 opentelemetry-appender-tracing = "0.2.0"
+mry = "0.7.1"
+axum-valid = "0.16.0"
 
 # [build]
 # rustflags = ["--cfg", "uuid_unstable"]

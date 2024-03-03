@@ -17,6 +17,6 @@ impl AuthController {
         let user = AuthService::login(&state.db, &state.webauthn, &data.id, &data.auth).await;
         let token = AuthService::generate_token(user.id).await;
 
-        Json((user, token).into())
+        Json((user.into(), token).into())
     }
 }

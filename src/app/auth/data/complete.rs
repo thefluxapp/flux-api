@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 use webauthn_rs::prelude::RegisterPublicKeyCredential;
 
-use super::{super::entities, user::User};
+use crate::app::auth::User;
 
 #[derive(Deserialize, Validate, Debug)]
 pub struct RequestData {
@@ -20,15 +20,8 @@ pub struct ResponseData {
     pub token: String,
 }
 
-impl From<(entities::user::Model, String)> for ResponseData {
-    fn from((user, token): (entities::user::Model, String)) -> Self {
-        ResponseData {
-            user: User {
-                id: user.id,
-                name: user.name(),
-                image: user.image(),
-            },
-            token,
-        }
+impl From<(User, String)> for ResponseData {
+    fn from((user, token): (User, String)) -> Self {
+        ResponseData { user, token }
     }
 }

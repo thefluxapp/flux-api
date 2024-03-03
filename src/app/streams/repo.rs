@@ -1,8 +1,6 @@
 use chrono::{Duration, Utc};
-use migration::{Expr, OnConflict};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter, Set,
-};
+use migration::Expr;
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
@@ -45,38 +43,38 @@ impl StreamsRepo {
             .unwrap()
     }
 
-    pub async fn create<T: ConnectionTrait>(
-        db: &T,
-        message_id: Uuid,
-        is_main: bool,
-        title: Option<String>,
-    ) -> entities::stream::Model {
-        entities::stream::ActiveModel {
-            title: Set(title),
-            message_id: Set(message_id),
-            is_main: Set(is_main),
-            ..Default::default()
-        }
-        .insert(db)
-        .await
-        .unwrap()
-    }
+    // pub async fn create<T: ConnectionTrait>(
+    //     db: &T,
+    //     message_id: Uuid,
+    //     is_main: bool,
+    //     title: Option<String>,
+    // ) -> entities::stream::Model {
+    //     entities::stream::ActiveModel {
+    //         title: Set(title),
+    //         message_id: Set(message_id),
+    //         is_main: Set(is_main),
+    //         ..Default::default()
+    //     }
+    //     .insert(db)
+    //     .await
+    //     .unwrap()
+    // }
 
-    pub async fn create_stream_task<T: ConnectionTrait>(db: &T, stream_id: Uuid) {
-        let stream_task = entities::stream_task::ActiveModel {
-            stream_id: Set(stream_id),
-            id: Set(Uuid::now_v7()),
-            created_at: Set(Utc::now().naive_utc()),
-            ..Default::default()
-        };
+    // pub async fn create_stream_task<T: ConnectionTrait>(db: &T, stream_id: Uuid) {
+    //     let stream_task = entities::stream_task::ActiveModel {
+    //         stream_id: Set(stream_id),
+    //         id: Set(Uuid::now_v7()),
+    //         created_at: Set(Utc::now().naive_utc()),
+    //         ..Default::default()
+    //     };
 
-        entities::stream_task::Entity::insert(stream_task)
-            .on_conflict(OnConflict::new().do_nothing().to_owned())
-            .do_nothing()
-            .exec(db)
-            .await
-            .unwrap();
-    }
+    //     entities::stream_task::Entity::insert(stream_task)
+    //         .on_conflict(OnConflict::new().do_nothing().to_owned())
+    //         .do_nothing()
+    //         .exec(db)
+    //         .await
+    //         .unwrap();
+    // }
 
     pub async fn find_streams<T: ConnectionTrait>(
         db: &T,

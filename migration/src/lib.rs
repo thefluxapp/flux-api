@@ -10,6 +10,9 @@ mod m20230820_174857_create_auth_states;
 mod m20231112_141751_create_user_push_subscriptions;
 mod m20231209_150708_add_is_main_to_streams;
 mod m20231210_170001_add_ya_gpt_id_to_stream_tasks;
+mod m20240229_121744_create_streams_users;
+mod m20240229_143819_create_uniq_index_to_messages_streams;
+mod m20240302_161914_create_uniq_index_to_streams;
 
 pub struct Migrator;
 
@@ -27,6 +30,9 @@ impl MigratorTrait for Migrator {
             Box::new(m20231112_141751_create_user_push_subscriptions::Migration),
             Box::new(m20231209_150708_add_is_main_to_streams::Migration),
             Box::new(m20231210_170001_add_ya_gpt_id_to_stream_tasks::Migration),
+            Box::new(m20240229_121744_create_streams_users::Migration),
+            Box::new(m20240229_143819_create_uniq_index_to_messages_streams::Migration),
+            Box::new(m20240302_161914_create_uniq_index_to_streams::Migration),
         ]
     }
 }

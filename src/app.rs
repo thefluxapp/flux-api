@@ -2,7 +2,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{routing::get, Router};
 use migration::{Migrator, MigratorTrait};
-use sea_orm::DatabaseConnection;
+use sea_orm::{DatabaseConnection, DbErr};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::{env, net::SocketAddr, str::FromStr};
@@ -12,7 +12,7 @@ use uuid::Uuid;
 use webauthn_rs::prelude::Url;
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
-use self::notifier::Notifier;
+// use self::notifier::Notifier;
 use self::summarizer::ya_gpt::YaGPT;
 // use self::summarizer::YaGPT;
 
@@ -20,7 +20,7 @@ mod auth;
 mod db;
 mod messages;
 // mod session;
-mod notifier;
+// mod notifier;
 mod streams;
 mod summarizer;
 mod tasks;
@@ -59,6 +59,13 @@ pub async fn run() {
 pub enum AppError {
     EntityNotFound,
     Forbidden,
+    Database,
+}
+
+impl From<DbErr> for AppError {
+    fn from(_: DbErr) -> Self {
+        AppError::Database
+    }
 }
 
 impl IntoResponse for AppError {
@@ -66,17 +73,29 @@ impl IntoResponse for AppError {
         let status = match self {
             AppError::EntityNotFound => StatusCode::NOT_FOUND,
             AppError::Forbidden => StatusCode::FORBIDDEN,
+            _ => StatusCode::BAD_REQUEST,
         };
 
         (status).into_response()
     }
 }
 
+// impl IntoResponse for BoxError {
+//     fn into_response(self) -> Response {
+//         let status = match self {
+//             AppError::Forbidden => StatusCode::FORBIDDEN,
+//             _ => StatusCode::BAD_REQUEST,
+//         };
+
+//         (status).into_response()
+//     }
+// }
+
 #[derive(Clone)]
 pub struct AppState {
     pub db: Arc<DatabaseConnection>,
     pub webauthn: Arc<Webauthn>,
-    pub notifier: Arc<Notifier>,
+    // pub notifier: Arc<Notifier>,
     pub auth_public_key: Arc<Vec<u8>>,
     pub ya_gpt: Arc<YaGPT>,
 }
@@ -92,7 +111,7 @@ impl AppState {
             .rp_name("Flux");
 
         let webauthn = Arc::new(builder.build().unwrap());
-        let notifier = Arc::new(Notifier::new(env::var("NATS_ADDR").unwrap()).await);
+        // let notifier = Arc::new(Notifier::new(env::var("NATS_ADDR").unwrap(), db.clone()).await);
 
         let auth_public_key = env::var("AUTH_PUBLIC_KEY_FILE").unwrap();
         let auth_public_key = Arc::new(
@@ -107,7 +126,7 @@ impl AppState {
         AppState {
             db,
             webauthn,
-            notifier,
+            // notifier,
             auth_public_key,
             ya_gpt,
         }

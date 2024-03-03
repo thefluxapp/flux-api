@@ -37,7 +37,7 @@ pub struct ResponseMessageStreamData {
 pub struct ResponseMessageUserData {
     pub id: Uuid,
     pub name: String,
-    pub image: String,
+    pub image: Option<String>,
 }
 
 impl

@@ -1,10 +1,11 @@
 use async_nats::Client;
 use axum::BoxError;
 use sea_orm::{
-    ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
+    ColumnTrait, Condition, DatabaseConnection, DbConn, EntityTrait, QueryFilter, QuerySelect,
     RelationTrait,
 };
 use serde::Serialize;
+use std::sync::Arc;
 use tracing::info;
 use uuid::Uuid;
 
@@ -12,6 +13,7 @@ mod entities;
 
 pub struct Notifier {
     client: Client,
+    db: Arc<DbConn>,
 }
 
 #[derive(Serialize)]
@@ -24,16 +26,16 @@ struct PushNotification {
 }
 
 impl Notifier {
-    pub async fn new(url: String) -> Self {
+    pub async fn new(url: String, db: Arc<DbConn>) -> Self {
         Self {
             client: async_nats::connect(url).await.unwrap(),
+            db,
         }
     }
 
     // message: entities::message::Model, stream: entities::stream::Model
     pub async fn notify(
         &self,
-        db: &DatabaseConnection,
         message: entities::message::Model,
         stream: entities::stream::Model,
         current_user_id: Uuid,
@@ -59,7 +61,7 @@ impl Notifier {
                     .to_owned(),
                 ),
             )
-            .all(db)
+            .all(self.db.as_ref())
             .await
             .unwrap();
 
