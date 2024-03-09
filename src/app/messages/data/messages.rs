@@ -37,6 +37,7 @@ pub struct ResponseMessageStreamData {
 pub struct ResponseMessageUserData {
     pub id: Uuid,
     pub name: String,
+    pub abbr: String,
     pub image: Option<String>,
 }
 
@@ -92,6 +93,7 @@ impl
                 Some(user) => Some(ResponseMessageUserData {
                     id: user.id,
                     name: user.name(),
+                    abbr: user.abbr(),
                     image: user.image(),
                 }),
                 _ => None,

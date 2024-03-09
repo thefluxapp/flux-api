@@ -18,7 +18,25 @@ pub struct Model {
 
 impl Model {
     pub fn name(&self) -> String {
-        self.first_name.as_ref().unwrap_or(&self.email).clone()
+        match (self.first_name.clone(), self.last_name.clone()) {
+            (Some(first_name), Some(last_name)) => [
+                [first_name, last_name.chars().take(1).collect()].join(" "),
+                ".".to_string(),
+            ]
+            .join(""),
+            _ => self.email.clone(),
+        }
+    }
+
+    pub fn abbr(&self) -> String {
+        match (self.first_name.clone(), self.last_name.clone()) {
+            (Some(first_name), Some(last_name)) => [
+                first_name.chars().take(1).collect::<String>(),
+                last_name.chars().take(1).collect(),
+            ]
+            .join(""),
+            _ => self.email.clone().chars().take(2).collect(),
+        }
     }
 
     pub fn image(&self) -> Option<String> {

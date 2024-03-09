@@ -1,6 +1,8 @@
 use chrono::{Duration, Utc};
 use migration::Expr;
-use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter};
+use sea_orm::{
+    ColumnTrait, Condition, ConnectionTrait, DbErr, EntityTrait, LoaderTrait, QueryFilter,
+};
 use sea_orm::{QueryOrder, QuerySelect};
 use uuid::Uuid;
 
@@ -76,18 +78,18 @@ impl StreamsRepo {
     //         .unwrap();
     // }
 
-    pub async fn find_streams<T: ConnectionTrait>(
-        db: &T,
-        is_main: bool,
-    ) -> Vec<(entities::stream::Model, Option<entities::user::Model>)> {
-        entities::stream::Entity::find()
-            .find_also_related(entities::user::Entity)
-            .filter(entities::stream::Column::IsMain.eq(is_main))
-            .order_by_desc(entities::stream::Column::Id)
-            .all(db)
-            .await
-            .unwrap()
-    }
+    // pub async fn find_streams<T: ConnectionTrait>(
+    //     db: &T,
+    //     is_main: bool,
+    // ) -> Vec<(entities::stream::Model, Option<entities::user::Model>)> {
+    //     entities::stream::Entity::find()
+    //         .find_also_related(entities::user::Entity)
+    //         .filter(entities::stream::Column::IsMain.eq(is_main))
+    //         .order_by_desc(entities::stream::Column::Id)
+    //         .all(db)
+    //         .await
+    //         .unwrap()
+    // }
 
     pub async fn find_and_lock_stream_tasks_batch<T: ConnectionTrait>(
         db: &T,
@@ -125,3 +127,38 @@ impl StreamsRepo {
             .unwrap()
     }
 }
+
+pub async fn find_all_streams_with_users<T: ConnectionTrait>(
+    db: &T,
+) -> Result<
+    (
+        Vec<entities::stream::Model>,
+        Vec<Vec<entities::stream_user::Model>>,
+    ),
+    DbErr,
+> {
+    let streams = entities::stream::Entity::find()
+        .order_by_desc(entities::stream::Column::Id)
+        .filter(entities::stream::Column::IsMain.eq(true))
+        .all(db)
+        .await?;
+
+    let streams_users = streams.load_many(entities::stream_user::Entity, db).await?;
+
+    Ok((streams, streams_users))
+}
+
+// pub async fn find_user_streams<T: ConnectionTrait>(
+//     db: &T,
+//     user_id: Uuid,
+// ) -> Result<Vec<entities::stream::Model>, DbErr> {
+//     let streams = entities::stream::Entity::find()
+//         .inner_join(entities::stream_user::Entity)
+//         .filter(entities::stream_user::Column::UserId.eq(user_id))
+//         .order_by_desc(entities::stream::Column::Id)
+//         .filter(entities::stream::Column::IsMain.eq(true))
+//         .all(db)
+//         .await?;
+
+//     Ok(streams)
+// }
