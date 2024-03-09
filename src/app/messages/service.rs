@@ -128,7 +128,7 @@ async fn create_message_and_stream(
             id: Uuid::now_v7(),
             title: data.title,
             text: None,
-            user_id: Some(user.id),
+            user_id: None,
             message_id: message.id,
             is_main: true,
             created_at: chrono::Utc::now().naive_utc(),

@@ -34,6 +34,7 @@ pub fn router() -> Router<AppState> {
 #[derive(Debug, Serialize)]
 pub struct User {
     pub id: Uuid,
+    pub abbr: String,
     pub name: String,
     pub image: Option<String>,
 }
@@ -43,6 +44,7 @@ impl From<entities::user::Model> for User {
         User {
             id: user.id,
             name: user.name(),
+            abbr: user.abbr(),
             image: user.image(),
         }
     }
