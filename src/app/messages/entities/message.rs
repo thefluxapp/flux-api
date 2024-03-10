@@ -18,7 +18,7 @@ impl Model {
     }
 
     pub fn order(&self) -> i64 {
-        self.created_at.timestamp_micros()
+        self.created_at.and_utc().timestamp_micros()
     }
 }
 

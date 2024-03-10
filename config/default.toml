@@ -1,0 +1,4 @@
+name = "flux-core"
+
+[observability]
+endpoint = "http://127.0.0.1:4317"
