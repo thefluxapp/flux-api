@@ -25,7 +25,7 @@ pub fn new() -> Result<Settings, ConfigError> {
     let s = Config::builder()
         .add_source(File::with_name(&format!("{}/config/default", app_dir)))
         .add_source(File::with_name(&format!("{}/config/{}", app_dir, app_env)).required(false))
-        .add_source(Environment::with_prefix("app"))
+        .add_source(Environment::with_prefix("app").separator("_"))
         .set_override("env", app_env)?
         .build()?;
 
