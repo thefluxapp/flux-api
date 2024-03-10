@@ -10,3 +10,4 @@ FROM alpine:latest
 RUN apk --no-cache upgrade
 RUN apk --no-cache add gcc
 COPY --from=build /app/target/release/flux-api /app/
+COPY --from=build /app/config/ /app/config/
