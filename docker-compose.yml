@@ -51,7 +51,7 @@ services:
           - flux-nats.flux.local
 
   otel:
-    image: otel/opentelemetry-collector
+    image: otel/opentelemetry-collector-contrib
     command: "--config=/etc/otel-config.yaml"
     volumes:
       - ./.local/otel-config.yaml:/etc/otel-config.yaml

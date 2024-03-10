@@ -111,10 +111,9 @@ impl StreamsRepo {
                                     .add(
                                         Condition::any()
                                             .add(entities::stream_task::Column::FailedAt.is_null())
-                                            .add(
-                                                entities::stream_task::Column::FailedAt
-                                                    .lt(Utc::now() - Duration::seconds(10)),
-                                            ),
+                                            .add(entities::stream_task::Column::FailedAt.lt(
+                                                Utc::now() - Duration::try_seconds(10).unwrap(),
+                                            )),
                                     ),
                             )
                             .limit(2),
