@@ -73,6 +73,17 @@ async fn create_message_for_stream(
     )
     .await?;
 
+    repo::create_message_stream(
+        &txn,
+        entities::message_stream::Model {
+            id: Uuid::now_v7(),
+            message_id: stream.message_id,
+            stream_id: stream.id,
+            created_at: chrono::Utc::now().naive_utc(),
+        },
+    )
+    .await?;
+
     repo::create_stream_task(
         &txn,
         entities::stream_task::Model {
