@@ -138,7 +138,7 @@ pub async fn find_all_streams_with_users<T: ConnectionTrait>(
 > {
     let streams = entities::stream::Entity::find()
         .order_by_desc(entities::stream::Column::Id)
-        .filter(entities::stream::Column::IsMain.eq(true))
+        // .filter(entities::stream::Column::IsMain.eq(true))
         .all(db)
         .await?;
 

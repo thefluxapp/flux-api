@@ -22,6 +22,7 @@ pub struct IndexResponseStreamData {
     pub label: String,
     pub users: Vec<Uuid>,
     pub is_current_user: bool,
+    pub is_main: bool,
     // pub user: Option<ResponseStreamUserData>,
 }
 
@@ -79,6 +80,7 @@ impl
                 Some(user) => stream_users.iter().map(|x| x.user_id).contains(&user.id),
                 _ => false,
             },
+            is_main: stream.is_main,
         }
     }
 }

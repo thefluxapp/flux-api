@@ -100,6 +100,20 @@ pub async fn create_stream_and_select_again<T: ConnectionTrait>(
         .await?
         .ok_or(DbErr::RecordNotInserted)?;
 
+    entities::message_stream::Entity::insert(
+        entities::message_stream::Model {
+            id: Uuid::now_v7(),
+            message_id: stream.message_id,
+            stream_id: stream.id,
+            created_at: chrono::Utc::now().naive_utc(),
+        }
+        .into_active_model(),
+    )
+    .on_conflict(OnConflict::new().do_nothing().to_owned())
+    .do_nothing()
+    .exec(db)
+    .await?;
+
     Ok(stream)
 }
 
