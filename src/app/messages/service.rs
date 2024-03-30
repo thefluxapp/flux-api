@@ -41,7 +41,7 @@ async fn create_message_for_stream(
                     text: None,
                     user_id: Some(user.id),
                     message_id,
-                    is_main: true,
+                    is_main: false,
                     created_at: chrono::Utc::now().naive_utc(),
                 },
             )
@@ -67,17 +67,6 @@ async fn create_message_for_stream(
         entities::message_stream::Model {
             id: Uuid::now_v7(),
             message_id: message.id,
-            stream_id: stream.id,
-            created_at: chrono::Utc::now().naive_utc(),
-        },
-    )
-    .await?;
-
-    repo::create_message_stream(
-        &txn,
-        entities::message_stream::Model {
-            id: Uuid::now_v7(),
-            message_id: stream.message_id,
             stream_id: stream.id,
             created_at: chrono::Utc::now().naive_utc(),
         },
