@@ -1,27 +1,27 @@
 services:
-  app: &app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: "cargo watch -x run"
-    environment:
-      APP_ADDR: 0.0.0.0:3000
-      DATABASE_URL: postgres://postgres:postgres@flux-pg.flux.local/flux
-      HISTFILE: /app/.local/.bash_history
-    networks:
-      default:
-        aliases:
-          - flux-api.flux.local
-    ports:
-      - 3091:3000
-    depends_on:
-      - pg
-    stdin_open: true
-    tty: true
-    volumes:
-      - ./:/app
-      - cargo-home:/usr/local/cargo
-      - rustup-home:/usr/local/rustup
+  # app: &app
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: "cargo watch -x run"
+  #   environment:
+  #     APP_ADDR: 0.0.0.0:3000
+  #     DATABASE_URL: postgres://postgres:postgres@flux-pg.flux.local/flux
+  #     HISTFILE: /app/.local/.bash_history
+  #   networks:
+  #     default:
+  #       aliases:
+  #         - flux-api.flux.local
+  #   ports:
+  #     - 3091:3000
+  #   depends_on:
+  #     - pg
+  #   stdin_open: true
+  #   tty: true
+  #   volumes:
+  #     - ./:/app
+  #     - cargo-home:/usr/local/cargo
+  #     - rustup-home:/usr/local/rustup
 
   pg:
     image: postgres:16-alpine
@@ -70,4 +70,4 @@ volumes:
 
 networks:
   default:
-    name: flux-dev
+    name: flux-local

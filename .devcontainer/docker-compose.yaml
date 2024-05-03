@@ -1,0 +1,23 @@
+services:
+  flux-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      default:
+        aliases:
+          - flux-api.flux.local
+    volumes:
+      - ..:/flux-api:cached
+      - cargo-home:/usr/local/cargo
+      - rustup-home:/usr/local/rustup
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+volumes:
+  cargo-home:
+  rustup-home:
+
+
+networks:
+  default:
+    name: flux-local
