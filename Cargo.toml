@@ -7,39 +7,39 @@ edition = "2021"
 members = [".", "migration"]
 
 [dependencies]
-migration = { path = "./migration" }
-
-dotenv = "0.15.0"
+# migration = { path = "./migration" }
 
 axum = "0.7.4"
 axum-extra = { version = "0.9.2", features = ["typed-header"] }
 axum-valid = "0.17.0"
 
-jsonwebtoken = "9.2.0"
 sea-orm = { version = "0.12.14", features = [
   "sqlx-postgres",
-  "sqlx-sqlite",
-  "runtime-tokio-native-tls",
+  "runtime-tokio-rustls",
   "macros",
   "mock",
   "with-uuid",
   "with-time",
   "with-json",
 ] }
-serde = { version = "1.0.197", features = ["derive"] }
+
 tokio = { version = "1.36.0", features = ["full"] }
-validator = { version = "0.17.0", features = ["derive"] }
-uuid = { version = "1.8.0", features = ["v4", "v7"] }
+tokio-stream = "0.1.14"
 
 chrono = "0.4.35"
-webauthn-rs = { version = "0.4.8", features = [
-  "danger-allow-state-serialisation",
-] }
 rand = { version = "0.8.5", features = ["min_const_gen"] }
-serde_json = "1.0.114"
+validator = { version = "0.17.0", features = ["derive"] }
 itertools = "0.12.1"
-reqwest = { version = "0.11.25", features = ["json"] }
-tokio-stream = "0.1.14"
+uuid = { version = "1.8.0", features = ["v4", "v7"] }
+
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
+
+reqwest = { version = "0.11.25", default-features = false, features = [
+  "rustls-tls",
+  "json",
+] }
+
 async-nats = "0.34.0"
 
 tracing = "0.1.40"
@@ -58,12 +58,10 @@ opentelemetry-otlp = { version = "0.15.0", features = [
   "trace",
 ] }
 
-mry = "0.7.1"
+dotenv = "0.15.0"
 config = "0.14.0"
 
+jsonwebtoken = "9.2.0"
+passkey = "0.2.0"
 
-# [build]
-# rustflags = ["--cfg", "uuid_unstable"]
-
-# [dev-dependencies]
-# tower = { version = "0.4.13", features = ["util"] }
+mry = "0.7.1"
