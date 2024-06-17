@@ -24,7 +24,7 @@ struct PushNotification {
 }
 
 impl Notifier {
-    pub async fn new(url: String, db: Arc<DbConn>) -> Self {
+    pub async fn new(url: &String, db: Arc<DbConn>) -> Self {
         Self {
             client: async_nats::connect(url).await.unwrap(),
             db,

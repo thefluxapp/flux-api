@@ -4,6 +4,8 @@ use axum::BoxError;
 use reqwest::{header::AUTHORIZATION, Client};
 use serde::{Deserialize, Serialize};
 
+use crate::settings::YaGPTSettings;
+
 pub struct YaGPT {
     completion_url: String,
     operation_url: String,
@@ -16,21 +18,15 @@ pub struct YaGPT {
 }
 
 impl YaGPT {
-    pub fn new() -> Self {
+    pub fn new(settings: &YaGPTSettings) -> Self {
         Self {
-            completion_url: env::var("YA_GPT_URL").unwrap(),
-            operation_url: env::var("YA_GPT_OPERATION_URL").unwrap(),
-            model_url: env::var("YA_GPT_MODEL_URI").unwrap(),
-            api_key: env::var("YA_GPT_API_KEY").unwrap(),
-            temperature: env::var("YA_GPT_TEMPERATURE")
-                .unwrap_or("0.6".to_string())
-                .parse()
-                .unwrap(),
-            instruction: env::var("YA_GPT_INSTRUCTION").unwrap(),
-            max_tokens: env::var("YA_GPT_MAX_TOKENS")
-                .unwrap_or("8000".to_string())
-                .parse()
-                .unwrap(),
+            completion_url: settings.completion_url.clone(),
+            operation_url: settings.operation_url.clone(),
+            model_url: settings.model_url.clone(),
+            api_key: settings.api_key.clone(),
+            temperature: settings.temperature,
+            instruction: settings.instruction.clone(),
+            max_tokens: settings.max_tokens,
             client: reqwest::Client::builder()
                 .timeout(Duration::from_secs(20))
                 .build()

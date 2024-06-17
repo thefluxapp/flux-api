@@ -1,7 +1,6 @@
-use migration::OnConflict;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, IntoActiveModel,
-    QueryFilter, QuerySelect, QueryTrait, RelationTrait,
+    sea_query::OnConflict, ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait,
+    IntoActiveModel, QueryFilter, QuerySelect, QueryTrait, RelationTrait,
 };
 use uuid::Uuid;
 

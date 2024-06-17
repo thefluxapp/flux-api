@@ -7,6 +7,8 @@ services:
       default:
         aliases:
           - flux-api.flux.local
+    ports:
+      - 12400:3000
     volumes:
       - ..:/flux-api:cached
       - cargo-home:/usr/local/cargo

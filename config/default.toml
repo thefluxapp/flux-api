@@ -1,4 +1,23 @@
-name = "flux-core"
+name = "flux-api"
+
+[http]
+endpoint = "0.0.0.0:3000"
+
+[database]
+endpoint = "postgres://postgres:postgres@flux-pg.flux.local/flux"
+max_connections = 15
+min_connections = 5
+
+[notifier]
+endpoint = "flux-nats.flux.local:4222"
+
+[ya_gpt]
+completion_url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completionAsync"
+operation_url = "https://llm.api.cloud.yandex.net/operations"
+model_url = "gpt://b1gr3et6kspodptk26un/yandexgpt-lite"
+temperature = 0.6
+instruction = "Summarize dialog in 3 sentences."
+max_tokens = 8000
 
 [observability]
 endpoint = "http://127.0.0.1:4317"

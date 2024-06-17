@@ -49,18 +49,18 @@ services:
       default:
         aliases:
           - flux-nats.flux.local
-
-  otel:
-    image: otel/opentelemetry-collector-contrib
-    command: "--config=/etc/otel-config.yaml"
-    volumes:
-      - ./.local/otel-config.yaml:/etc/otel-config.yaml
-    ports:
-      - 4317:4317
-    networks:
-      default:
-        aliases:
-          - flux-newrelic.flux.local
+  #
+  # otel:
+  #   image: otel/opentelemetry-collector-contrib
+  #   command: "--config=/etc/otel-config.yaml"
+  #   volumes:
+  #     - ./.local/otel-config.yaml:/etc/otel-config.yaml
+  #   ports:
+  #     - 4317:4317
+  #   networks:
+  #     default:
+  #       aliases:
+  #         - flux-newrelic.flux.local
 
 volumes:
   cargo-home:

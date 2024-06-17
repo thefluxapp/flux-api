@@ -1,5 +1,6 @@
 use chrono::{Duration, Utc};
-use migration::Expr;
+use sea_orm::sea_query::Expr;
+// use migration::Expr;
 use sea_orm::{
     ColumnTrait, Condition, ConnectionTrait, DbErr, EntityTrait, LoaderTrait, QueryFilter,
 };

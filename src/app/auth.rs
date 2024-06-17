@@ -14,7 +14,7 @@ use sea_orm::DatabaseConnection;
 use serde::Serialize;
 use uuid::Uuid;
 
-use self::controller::AuthController;
+// use self::controller::AuthController;
 use super::{users::repo as users_repo, AppError, AppState, JwtUser};
 
 mod controller;
@@ -25,10 +25,10 @@ mod service;
 
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/login", post(AuthController::login))
-        .route("/join", post(AuthController::join))
-        .route("/complete", post(AuthController::complete))
-        .route("/", get(AuthController::index))
+        .route("/login", post(controller::login))
+        .route("/join", post(controller::join))
+        .route("/complete", post(controller::complete))
+        .route("/me", get(controller::me))
 }
 
 #[derive(Debug, Serialize)]
@@ -59,13 +59,9 @@ where
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let AppState {
-            db,
-            auth_public_key,
-            ..
-        } = AppState::from_ref(state);
+        let AppState { db, auth_state, .. } = AppState::from_ref(state);
 
-        let user = get_user_from_jwt(parts, &db, &auth_public_key)
+        let user = get_user_from_jwt(parts, &db, &auth_state.public_key)
             .await
             .map_err(|_| AppError::Forbidden)?
             .ok_or(AppError::Forbidden)?;
@@ -97,4 +93,11 @@ async fn get_jwt_user(parts: &mut Parts, auth_public_key: &Vec<u8>) -> Result<Jw
     )?;
 
     Ok(claims)
+}
+
+#[derive(Clone)]
+pub struct AuthState {
+    pub public_key: Vec<u8>,
+    pub rp_id: String,
+    pub rp_name: String,
 }

@@ -1,5 +1,4 @@
-use chrono::Utc;
-use sea_orm::{entity::prelude::*, Set};
+use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
@@ -10,8 +9,6 @@ pub struct Model {
     pub email: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    #[sea_orm(column_type = "JsonBinary")]
-    pub passkeys: Json,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
@@ -44,26 +41,16 @@ impl Model {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_many = "super::user_credential::Entity")]
+    UserCredential,
+}
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
+impl Related<super::user_credential::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::UserCredential.def()
     }
 }
 
-#[async_trait::async_trait]
-impl ActiveModelBehavior for ActiveModel {
-    async fn before_save<C>(mut self, _: &C, insert: bool) -> Result<Self, DbErr>
-    where
-        C: ConnectionTrait,
-    {
-        if insert {
-            self.created_at = Set(Utc::now().naive_utc());
-        }
-        self.updated_at = Set(Utc::now().naive_utc());
-
-        Ok(self)
-    }
-}
+impl ActiveModelBehavior for ActiveModel {}
