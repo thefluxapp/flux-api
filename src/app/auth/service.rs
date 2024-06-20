@@ -1,86 +1,28 @@
-use std::{
-    env,
-    sync::Arc,
-    time::{Duration, SystemTime, UNIX_EPOCH},
-};
-
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
-use chrono::Utc;
+use chrono::{Days, Utc};
 use ecdsa::der::Signature;
-use rand::RngCore as _;
-// use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-// use passkey::{
-//     authenticator::{Authenticator, UserValidationMethod},
-//     client::Client,
-//     types::{
-//         ctap2::Aaguid,
-//         rand::random_vec,
-//         webauthn::{
-//             AttestationConveyancePreference, AuthenticatorAttestationResponse,
-//             CredentialCreationOptions, CredentialRequestOptions, PublicKeyCredential,
-//             PublicKeyCredentialCreationOptions, PublicKeyCredentialParameters,
-//             PublicKeyCredentialRequestOptions, PublicKeyCredentialRpEntity,
-//             PublicKeyCredentialType, PublicKeyCredentialUserEntity, UserVerificationRequirement,
-//         },
-//         Passkey,
-//     },
-// };
 use ecdsa::signature::Verifier;
 use ecdsa::{elliptic_curve::pkcs8::DecodePublicKey as _, VerifyingKey};
-use sea_orm::{ActiveValue::NotSet, DbConn, ModelTrait, Set, TransactionTrait};
-use serde::Serialize;
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use rand::RngCore as _;
+use sea_orm::{ActiveValue::NotSet, DbConn, Set, TransactionTrait};
 use sha2::{Digest as _, Sha256};
-use tokio::fs;
 use url::Url;
 use uuid::Uuid;
 
-use crate::app::{users::entities::user_challenge, AppError};
+use crate::app::{AppError, AppToken};
 
 use super::{
     data::{
-        CompleteRequestData, CompleteResponseData, CredentialCreationOptions,
-        CredentialRequestOptions, JoinRequestData, JoinResponseData, LoginRequestData,
-        LoginResponseData, PublicKeyCredentialCreationOptions, PublicKeyCredentialDescriptor,
-        PublicKeyCredentialParameters, PublicKeyCredentialRequestOptions,
-        PublicKeyCredentialRpEntity, PublicKeyCredentialUserEntity,
+        ClientData, CompleteRequestData, CredentialCreationOptions, CredentialRequestOptions,
+        JoinResponseData, LoginRequestData, PublicKeyCredentialCreationOptions,
+        PublicKeyCredentialDescriptor, PublicKeyCredentialParameters,
+        PublicKeyCredentialRequestOptions, PublicKeyCredentialRpEntity,
+        PublicKeyCredentialUserEntity,
     },
-    entities::{self, user_credential},
+    entities::{self},
     repo, AuthState,
 };
-
-// mod complete;
-// mod login;
-
-#[derive(Debug, Serialize)]
-pub struct AuthPayload {
-    pub sub: Uuid,
-    pub exp: u128,
-}
-
-// pub struct AuthService {}
-
-// impl AuthService {
-//     pub async fn generate_token(sub: Uuid) -> String {
-//         let payload = AuthPayload {
-//             sub,
-//             exp: (SystemTime::now() + Duration::new(60 * 60 * 24 * 365, 0))
-//                 .duration_since(UNIX_EPOCH)
-//                 .unwrap()
-//                 .as_millis(),
-//         };
-
-//         // TODO: Do not read from file every time
-//         let auth_private_key = env::var("AUTH_PRIVATE_KEY_FILE").unwrap();
-//         let auth_private_key = fs::read_to_string(auth_private_key).await.unwrap();
-
-//         encode(
-//             &Header::new(Algorithm::RS256),
-//             &payload,
-//             &EncodingKey::from_rsa_pem(&auth_private_key.into_bytes()).unwrap(),
-//         )
-//         .unwrap()
-//     }
-// }
 
 pub async fn join(
     db: &DbConn,
@@ -95,7 +37,6 @@ pub async fn join(
             let cro = PublicKeyCredentialRequestOptions {
                 challenge,
                 rp_id: Some(auth_state.rp_id.clone()),
-                // user_verification: "preferred".to_string(),
                 allow_credentials: user_credentials
                     .into_iter()
                     .map(|user_credential| PublicKeyCredentialDescriptor {
@@ -164,23 +105,20 @@ pub async fn join(
 
 pub async fn complete(
     db: &DbConn,
+    auth_state: &AuthState,
     data: CompleteRequestData,
-) -> Result<CompleteResponseData, AppError> {
-    if data.credential.response.client_data.tp != "webauthn.create" {
-        Err(AppError::BadRequest)?;
-    }
+) -> Result<entities::user::Model, AppError> {
+    let client_data: ClientData = data.credential.response.client_data;
 
-    // TODO: Check origin
+    validate_origin(&client_data.origin, &auth_state.rp_id)?;
+    validate_tp(&client_data.tp, "webauthn.create")?;
 
     let txn = db.begin().await?;
 
-    let user_challenge =
-        match repo::find_user_challengle(&txn, &data.credential.response.client_data.challenge)
-            .await?
-        {
-            Some(user_challenge) => Ok(user_challenge),
-            None => Err(AppError::EntityNotFound),
-        }?;
+    let user_challenge = match repo::find_user_challengle(&txn, &client_data.challenge).await? {
+        Some(user_challenge) => Ok(user_challenge),
+        None => Err(AppError::EntityNotFound),
+    }?;
 
     let email = match user_challenge.user_name.clone() {
         Some(email) => Ok(email),
@@ -217,32 +155,88 @@ pub async fn complete(
 
     txn.commit().await?;
 
-    Ok(CompleteResponseData {})
+    Ok(user)
 }
 
-pub async fn login(db: &DbConn, data: LoginRequestData) -> Result<LoginResponseData, AppError> {
-    let user_credential = repo::find_user_credential(db, &data.credential.id).await?;
+pub async fn login(
+    db: &DbConn,
+    auth_state: &AuthState,
+    data: LoginRequestData,
+) -> Result<entities::user::Model, AppError> {
+    let client_data: ClientData =
+        serde_json::from_slice(&data.credential.response.client_data_json)?;
 
-    let verifying_key: VerifyingKey<p256::NistP256> =
-        ecdsa::VerifyingKey::from_public_key_der(&user_credential.public_key).unwrap();
+    validate_origin(&client_data.origin, &auth_state.rp_id)?;
+    validate_tp(&client_data.tp, "webauthn.get")?;
+
+    let txn = db.begin().await?;
 
     let client_data_json_hash = Sha256::digest(&data.credential.response.client_data_json).to_vec();
 
-    dbg!(&data.credential.response.authenticator_data);
-    dbg!(&client_data_json_hash);
+    let (user_credential, user_challenge) =
+        repo::find_user_credential_and_challenge(&txn, &data.credential.id, &client_data.challenge)
+            .await?;
+
+    let verifying_key: VerifyingKey<p256::NistP256> =
+        ecdsa::VerifyingKey::from_public_key_der(&user_credential.public_key)?;
 
     let mut message: Vec<u8> = data.credential.response.authenticator_data;
     message.extend(&client_data_json_hash);
 
-    dbg!(&message);
+    let signature = Signature::from_bytes(&data.credential.response.signature)?;
+    verifying_key.verify(&message, &signature)?;
 
-    let signature = Signature::from_bytes(&data.credential.response.signature).unwrap();
+    let user_id = user_challenge.user_id.clone();
+    repo::delete_user_challengle(&txn, user_challenge).await?;
 
-    let result = verifying_key.verify(&message, &signature);
+    txn.commit().await?;
 
-    dbg!(&result);
+    let user = repo::find_user_by_id(db, user_id).await?;
 
-    Ok(LoginResponseData {})
+    Ok(user)
+}
+
+pub fn create_jwt(auth_state: &AuthState, user: &entities::user::Model) -> Result<String, AppError> {
+    let claims = AppToken {
+        sub: user.id,
+        exp: chrono::Utc::now()
+            .checked_add_days(Days::new(600))
+            .ok_or_else(|| AppError::BadRequest)?
+            .timestamp(),
+    };
+
+    let jwt = encode(
+        &Header::new(Algorithm::RS256),
+        &claims,
+        &EncodingKey::from_rsa_pem(&auth_state.private_key).unwrap(),
+    )?;
+    Ok(jwt)
+}
+
+fn validate_origin(origin: &str, expected: &str) -> Result<(), AppError> {
+    // TODO: rewrite it!
+
+    return match Url::parse(&origin) {
+        Ok(url) => match url.host() {
+            Some(host) => {
+                if host.to_string() == expected {
+                    Ok(())
+                } else {
+                    Err(AppError::Verify)
+                }
+            }
+            None => Err(AppError::Verify),
+        },
+        Err(_) => Err(AppError::Verify),
+    };
+}
+
+fn validate_tp(tp: &str, expected: &str) -> Result<(), AppError> {
+    if tp != expected {
+        return Err(AppError::Verify);
+    };
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -250,16 +244,10 @@ mod tests {
     use base64::engine::general_purpose::URL_SAFE_NO_PAD;
     use base64::Engine;
 
-    use ecdsa::der::Signature;
-    use ecdsa::signature::Verifier;
-    use ecdsa::{elliptic_curve::pkcs8::DecodePublicKey as _, VerifyingKey};
-    // use sha2::;
-    use sha2::{Digest, Sha256};
-
     use super::*;
 
     #[test]
-    fn hash_user_id() {
+    fn hash_user_id_test() {
         let user_id = Uuid::parse_str("018f6830-3a33-7857-8239-b01d71b1c914").unwrap();
 
         assert_eq!(
@@ -269,72 +257,12 @@ mod tests {
     }
 
     #[test]
-    fn sign_test() {
-        // let verifying_key = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEaBtE5hCryzaXqsR_HxOn4mJfl54fUwqjXBQV7ACDuRD3blNTjSljOh4IxHrJwzJ_hPE5j5TGfuzU5ucDbN0pfA";
-        // let client_data_json = "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoicTRCbHBGNUN2TmlIeDVxOGtYMUpPR2hWWkROMW1pRlBNREpwTHF1VlkyWEMtSTdTelJvaHc3N3pSdk1KY1BkYWpNWlJjYkdzVEZXRnFKWnpMdkhuaHciLCJvcmlnaW4iOiJodHRwczovL3dlYmF1dGhuLmlvIiwiY3Jvc3NPcmlnaW4iOmZhbHNlfQ";
-        // let authenticator_data = "dKbqkhPJnC90siSSsyDPQCYqlMGpUKA5fyklC2CEHvAFAAAAAA";
-        // let signature = "MEUCIBYjb1n5XAZ_wuWLKT3nfjdOb6Ai7Hh0v2jl0DG-BFd1AiEA7_qvjNma8tofXbnIbgwQ369dfgXK4or7_IdzFSTHUzU";
-        let verifying_key = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEaBtE5hCryzaXqsR_HxOn4mJfl54fUwqjXBQV7ACDuRD3blNTjSljOh4IxHrJwzJ_hPE5j5TGfuzU5ucDbN0pfA";
-        let client_data_json = "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoialRyQV95MWJjd0dvczYtSmZ2YTdOQlFKcnNuWlRuTTQ5VlAzUkxNeXB3QXFVVHl6bWJmV0tHVHhCSUN6RnVTMDNFWUpBTldpRTZHUUQ0djNWbmJPOUEiLCJvcmlnaW4iOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJjcm9zc09yaWdpbiI6ZmFsc2UsIm90aGVyX2tleXNfY2FuX2JlX2FkZGVkX2hlcmUiOiJkbyBub3QgY29tcGFyZSBjbGllbnREYXRhSlNPTiBhZ2FpbnN0IGEgdGVtcGxhdGUuIFNlZSBodHRwczovL2dvby5nbC95YWJQZXgifQ";
-        let authenticator_data = "SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MFAAAAAA";
-        let signature = "MEQCID9705cwoCndkpORJoA5mn5jqWXYTYsWigOKG5jmerC_AiADvFzRZMFCrMTQToQdlyC9BiwCEeAQs5Y6bIjiTbKs_g";
-
-        let verifying_key = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(verifying_key)
-            .unwrap();
-
-        let verifying_key: VerifyingKey<p256::NistP256> =
-            ecdsa::VerifyingKey::from_public_key_der(&verifying_key).unwrap();
-
-        let qq = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(client_data_json)
-            .unwrap()
-            .to_vec();
-
-        dbg!(&qq);
-
-        // let hasher = Sha256::new();
-        let client_data_json_hash = Sha256::digest(
-            base64::engine::general_purpose::URL_SAFE_NO_PAD
-                .decode(client_data_json)
-                .unwrap()
-                .to_vec(),
-        )
-        .to_vec();
-
-        // hasher.update(
-        //     base64::engine::general_purpose::URL_SAFE_NO_PAD
-        //         .decode(client_data_json)
-        //         .unwrap()
-        //         .to_vec(),
-        // );
-        // let client_data_json_hash = hasher.finalize();
-
-        // let client_data_json_hash = ring::digest::digest(
-        //     &ring::digest::SHA256,
-        //     ,
-        // );
-
-        let authenticator_data = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(authenticator_data)
-            .unwrap();
-
-        dbg!(&authenticator_data);
-        dbg!(&client_data_json_hash);
-
-        let mut message: Vec<u8> = authenticator_data;
-        message.extend(&client_data_json_hash);
-
-        dbg!(&message);
-
-        let signature = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(signature)
-            .unwrap();
-
-        let signature = Signature::from_bytes(&signature).unwrap();
-
-        let result = verifying_key.verify(&message, &signature);
-
-        dbg!(&result);
+    fn validate_origin_test() {
+        assert!(validate_origin("http://example.com/", "example.com").is_ok());
+        assert!(validate_origin("http://example.com/path", "example.com").is_ok());
+        assert!(validate_origin("http://example.com:3000/", "example.com").is_ok());
+        assert!(validate_origin("http://localhost:3000/", "localhost").is_ok());
+        assert!(validate_origin("http://sub.example.com/", "example.com").is_err());
+        assert!(validate_origin("http://not-example.com/", "example.com").is_err());
     }
 }

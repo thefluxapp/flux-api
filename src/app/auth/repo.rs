@@ -1,11 +1,8 @@
-use async_nats::jetstream::stream::No;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, IntoActiveModel,
     ModelTrait, QueryFilter, QuerySelect,
 };
 use uuid::Uuid;
-
-use crate::app::users::entities::user_challenge;
 
 use super::entities;
 
@@ -67,14 +64,31 @@ pub async fn create_user_credential<T: ConnectionTrait>(
     Ok(user)
 }
 
-pub async fn find_user_credential<T: ConnectionTrait>(
+pub async fn find_user_credential_and_challenge<T: ConnectionTrait>(
     db: &T,
-    id: &String,
-) -> Result<entities::user_credential::Model, DbErr> {
-    Ok(entities::user_credential::Entity::find_by_id(id)
+    user_credential_id: &String,
+    user_challenge_id: &String,
+) -> Result<
+    (
+        entities::user_credential::Model,
+        entities::user_challenge::Model,
+    ),
+    DbErr,
+> {
+    let user_credential = entities::user_credential::Entity::find_by_id(user_credential_id)
         .one(db)
         .await?
-        .ok_or_else(|| DbErr::RecordNotFound("".to_string()))?)
+        .ok_or_else(|| DbErr::RecordNotFound("".to_string()))?;
+
+    let user_challenge = entities::user_challenge::Entity::find()
+        .filter(entities::user_challenge::Column::Id.eq(user_challenge_id))
+        .filter(entities::user_challenge::Column::UserId.eq(user_credential.user_id))
+        .lock_exclusive()
+        .one(db)
+        .await?
+        .ok_or_else(|| DbErr::RecordNotFound("".to_string()))?;
+
+    Ok((user_credential, user_challenge))
 }
 
 pub async fn delete_user_challengle<T: ConnectionTrait>(
@@ -84,4 +98,16 @@ pub async fn delete_user_challengle<T: ConnectionTrait>(
     model.delete(db).await?;
 
     Ok(())
+}
+
+pub async fn find_user_by_id<T: ConnectionTrait>(
+    db: &T,
+    id: Uuid,
+) -> Result<entities::user::Model, DbErr> {
+    let user = entities::user::Entity::find_by_id(id)
+        .one(db)
+        .await?
+        .ok_or_else(|| DbErr::RecordNotFound("".to_string()))?;
+
+    Ok(user)
 }

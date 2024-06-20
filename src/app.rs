@@ -1,18 +1,13 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{routing::get, Router};
-// use migration::{Migrator, MigratorTrait};
 use sea_orm::{DbConn, DbErr};
 use serde::{Deserialize, Serialize};
+use tokio::fs;
 use std::sync::Arc;
-// use std::{env, net::SocketAddr, str::FromStr};
-// use tokio::fs;
-// use tracing::info;
 use uuid::Uuid;
-// use webauthn_rs::prelude::Url;
-// use webauthn_rs::{Webauthn, WebauthnBuilder};
 
-use crate::settings::{AuthSettings, Settings};
+use super::settings::Settings;
 
 use self::auth::AuthState;
 use self::notifier::Notifier;
@@ -62,6 +57,7 @@ pub enum AppError {
     BadRequest,
     Database,
     Json,
+    Verify,
 }
 
 impl From<DbErr> for AppError {
@@ -72,6 +68,24 @@ impl From<DbErr> for AppError {
 
 impl From<serde_json::Error> for AppError {
     fn from(_: serde_json::Error) -> Self {
+        AppError::Json
+    }
+}
+
+impl From<ecdsa::Error> for AppError {
+    fn from(_: ecdsa::Error) -> Self {
+        AppError::Verify
+    }
+}
+
+impl From<p256::pkcs8::spki::Error> for AppError {
+    fn from(_: p256::pkcs8::spki::Error) -> Self {
+        AppError::Verify
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for AppError {
+    fn from(_: jsonwebtoken::errors::Error) -> Self {
         AppError::Json
     }
 }
@@ -121,10 +135,13 @@ impl AppState {
         // let auth_public_key = Arc::new(vec![]);
         // let settings = Arc::new(settings);
 
+        // dbg!(&settings);
+
         let auth_state = AuthState {
             rp_id: settings.auth.rp_id.clone(),
             rp_name: settings.auth.rp_name.clone(),
-            public_key: settings.auth.public_key.clone(),
+            public_key: fs::read_to_string(&settings.auth.public_key_file).await.unwrap_or_default().into_bytes(),
+            private_key: fs::read_to_string(&settings.auth.private_key_file).await.unwrap_or_default().into_bytes(),
         };
 
         let ya_gpt = Arc::new(YaGPT::new(&settings.ya_gpt));
@@ -143,7 +160,8 @@ pub struct AppSession {
     pub user: Option<users::entities::user::Model>,
 }
 
-#[derive(Debug, Deserialize)]
-struct JwtUser {
+#[derive(Debug, Deserialize, Serialize)]
+struct AppToken {
     pub sub: Uuid,
+    pub exp: i64,
 }

@@ -1,4 +1,4 @@
-use std::{env, fs};
+use std::env;
 
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
@@ -39,10 +39,7 @@ pub struct YaGPTSettings {
 #[derive(Deserialize, Debug)]
 pub struct AuthSettings {
     pub private_key_file: String,
-    pub private_key: Vec<u8>,
-
     pub public_key_file: String,
-    pub public_key: Vec<u8>,
 
     pub rp_id: String,
     pub rp_name: String,
@@ -70,44 +67,7 @@ pub fn new() -> Result<Settings, ConfigError> {
         .add_source(File::with_name(&format!("{}/config/{}", app_dir, app_env)).required(false))
         .add_source(File::with_name(&format!("{}/config/local", app_dir)).required(false))
         .add_source(Environment::with_prefix("app").separator("_"))
-        .set_default("env", app_env)?
-        .set_default(
-            "auth.private_key",
-            read_env_key_from_file("AUTH_PRIVATE_KEY_FILE"),
-        )?
-        .set_default(
-            "auth.public_key",
-            read_env_key_from_file("AUTH_PUBLIC_KEY_FILE"),
-        )?;
+        .set_default("env", app_env)?;
 
     s.build()?.try_deserialize()
-}
-
-fn read_env_key_from_file(key: &str) -> Vec<u8> {
-    match env::var(key) {
-        Ok(file_path) => fs::read_to_string(file_path)
-            .unwrap_or_default()
-            .into_bytes(),
-        Err(_) => vec![],
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn without_env() {
-        let v: Vec<u8> = vec![];
-        assert_eq!(read_env_key_from_file("NOT_EXISTS"), v);
-    }
-
-    #[test]
-    fn without_file() {
-        let v: Vec<u8> = vec![];
-
-        env::set_var("KEY", "not_exists_path");
-
-        assert_eq!(read_env_key_from_file("KEY"), v);
-    }
 }

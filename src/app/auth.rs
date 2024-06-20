@@ -15,7 +15,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 // use self::controller::AuthController;
-use super::{users::repo as users_repo, AppError, AppState, JwtUser};
+use super::{users::repo as users_repo, AppError, AppState, AppToken};
 
 mod controller;
 mod data;
@@ -81,12 +81,12 @@ pub async fn get_user_from_jwt(
     Ok(user)
 }
 
-async fn get_jwt_user(parts: &mut Parts, auth_public_key: &Vec<u8>) -> Result<JwtUser, BoxError> {
+async fn get_jwt_user(parts: &mut Parts, auth_public_key: &Vec<u8>) -> Result<AppToken, BoxError> {
     let TypedHeader(Authorization(bearer)) = parts
         .extract::<TypedHeader<Authorization<Bearer>>>()
         .await?;
 
-    let TokenData { claims, .. } = decode::<JwtUser>(
+    let TokenData { claims, .. } = decode::<AppToken>(
         bearer.token(),
         &DecodingKey::from_rsa_pem(auth_public_key).unwrap(),
         &Validation::new(Algorithm::RS256),
@@ -95,9 +95,10 @@ async fn get_jwt_user(parts: &mut Parts, auth_public_key: &Vec<u8>) -> Result<Jw
     Ok(claims)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AuthState {
     pub public_key: Vec<u8>,
+    pub private_key: Vec<u8>,
     pub rp_id: String,
     pub rp_name: String,
 }
